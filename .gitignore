@@ -1,0 +1,24 @@
+# ⚠️ مفاتيح وأسرار — لا تُرفع أبداً
+kashfi.config.json
+.env
+.env.*
+*.env.local
+
+# نظام التشغيل والمحرر
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# بيئة التشغيل
+node_modules/
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# منصات النشر (مجلدات بناء)
+.vercel
+.netlify/
+dist/
+build/

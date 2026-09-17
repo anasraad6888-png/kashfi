@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- خلفية خضراء بنكية بزوايا دائرية -->
+  <rect width="64" height="64" rx="14" fill="#0f5c4e"/>
+  <!-- السقف المثلثي -->
+  <path d="M32 8.5 L56.5 23.5 L7.5 23.5 Z" fill="#c9a227"/>
+  <!-- العارضة تحت السقف -->
+  <rect x="10" y="25.5" width="44" height="2.6" rx="1.3" fill="#ffffff" opacity="0.85"/>
+  <!-- الأعمدة -->
+  <rect x="13.5" y="30.5" width="7.2" height="18.5" rx="1.6" fill="#ffffff"/>
+  <rect x="28.4" y="30.5" width="7.2" height="18.5" rx="1.6" fill="#ffffff"/>
+  <rect x="43.3" y="30.5" width="7.2" height="18.5" rx="1.6" fill="#ffffff"/>
+  <!-- القاعدة -->
+  <rect x="9" y="51" width="46" height="5.5" rx="2" fill="#c9a227"/>
+</svg>

@@ -1,0 +1,14 @@
+# إعدادات نشر Netlify — موقع ثابت
+[build]
+  publish = "."
+
+# ترويسات صحيحة لملفات الخط والصور (كاش أطول للأصول الثابتة)
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/libs/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"

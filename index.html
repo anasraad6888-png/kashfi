@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مولّد كشف الحساب الشخصي</title>
+  <!-- أيقونة الموقع: بنك بألوان الهوية -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"?v=27>
+</head>
+<body>
+
+  <!-- ===== شريط التنقل ===== -->
+  <header class="navbar no-print">
+    <div class="container nav-content">
+      <div class="logo">
+        <span class="logo-icon">🏦</span>
+        <span class="logo-text">كشفي <small>مولّد كشوف الحساب الشخصية</small></span>
+      </div>
+      <nav class="nav-links">
+        <a href="#account-form" class="tab-link active" data-tab="account">🏦 كشف الحساب</a>
+        <a href="#flight-form" class="tab-link" data-tab="flights">✈️ حجز طيران</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== القسم الرئيسي ===== -->
+  <main class="container">
+
+    <!-- ══════ تبويب: كشف الحساب ══════ -->
+    <div class="tab-panel active" id="tab-account">
+
+    <!-- واجهة الإدخال -->
+    <section id="editor" class="no-print">
+
+      <div class="hero">
+        <h1>أنشئ كشف حسابك الشخصي في ثواني</h1>
+        <p>اكتب اسم صاحب الحساب فقط، وسيتولد الكشف كاملاً بحركات عشوائية — ثم اطبعه أو احفظه PDF. كل البيانات تُحفظ في متصفحك فقط.</p>
+      </div>
+
+      <!-- بيانات الحساب (الاسم فقط — الباقي تلقائي) -->
+      <section class="card" id="account-form">
+        <h2 class="card-title">👤 اسم صاحب الحساب</h2>
+        <p class="auto-note">رقم الحساب ورقم الجوال وفترة الكشف تتولد تلقائياً — كل ما عليك هو كتابة الاسم فقط، ثم يصبح لديك كشف حساب جاهز للطباعة والاستخدام.</p>
+        <div class="field holder-field">
+          <label for="accountHolder">اسم صاحب الحساب (Customer Name)</label>
+          <input type="text" id="accountHolder" placeholder="مثال: ANAS RAAD">
+        </div>
+        <div class="field period-field">
+          <label>مدة الكشف (Statement Period)</label>
+          <div class="seg" id="monthsSeg">
+            <button type="button" class="seg-btn active" data-m="3">3 أشهر</button>
+            <button type="button" class="seg-btn" data-m="6">6 أشهر</button>
+            <button type="button" class="seg-btn" data-m="9">9 أشهر</button>
+            <button type="button" class="seg-btn" data-m="12">12 شهراً</button>
+          </div>
+        </div>
+        <div class="field period-field">
+          <label>أقل رصيد في الكشف (Minimum Balance)</label>
+          <div class="seg" id="minSeg">
+            <button type="button" class="seg-btn active" data-v="3000000">3 ملايين</button>
+            <button type="button" class="seg-btn" data-v="6000000">6 ملايين</button>
+            <button type="button" class="seg-btn" data-v="9000000">9 ملايين</button>
+            <button type="button" class="seg-btn" data-v="12000000">12 مليوناً</button>
+          </div>
+        </div>
+        <div class="field period-field">
+          <label>نهاية الكشف (Statement End)</label>
+          <div class="seg" id="endSeg">
+            <button type="button" class="seg-btn active" data-e="prev">آخر الشهر السابق</button>
+            <button type="button" class="seg-btn" data-e="today">حتى تاريخ اليوم</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- أزرار التحكم والطباعة -->
+      <div class="print-actions">
+        <div class="actions-row">
+          <button id="regenTxBtn" class="btn btn-ghost" type="button">🧪 توليد حركات عشوائية</button>
+          <button id="regenBtn" class="btn btn-ghost" type="button">🎲 أرقام جديدة</button>
+          <button id="resetBtn" class="btn btn-primary-ghost" type="button">♻️ إعادة تعيين</button>
+          <button id="clearBtn" class="btn btn-danger-ghost" type="button">🗑️ مسح الكل</button>
+        </div>
+        <button id="pdfBtn" class="btn btn-primary btn-lg">⬇️ تنزيل PDF</button>
+        <button id="printBtn" class="btn btn-primary btn-lg">🖨️ طباعة</button>
+        <p class="hint">اكتب الاسم فقط — الأرقام والحركات تتولد تلقائياً.</p>
+      </div>
+
+      <p class="disclaimer no-print">
+        ⚠️ تنبيه: هذا الموقع أداة لتنظيم الحسابات الشخصية، والكشف الناتج هو <strong>ملخص شخصي</strong> مبني على بيانات أدخلها المستخدم بنفسه،
+        وليس مستنداً رسمياً صادراً من أي بنك، ولا يجوز استخدامه للانتحال أو التقديم كوثيقة بنكية رسمية.
+      </p>
+    </section>
+
+    <!-- ===== ورقة الكشف (صفحة لكل شهر كما في الكشوف المرجعية) ===== -->
+    <section id="statement" class="statement-paper" dir="ltr">
+      <div id="stmtMonths"></div>
+    </section>
+
+    </div><!-- /#tab-account -->
+
+    <!-- ══════════ تبويب: حجز طيران (مبدئي) ══════════ -->
+    <div class="tab-panel" id="tab-flights">
+      <div class="hero">
+        <h1>✈️ حجز طيران مبدئي</h1>
+        <p>ابحث عن رحلاتك بين المدن بضغطة زر — الرحلات والشركات والمطارات <strong>حقيقية</strong> من قاعدة بيانات المسارات العالمية، مع توقيت وأسعار تقديرية. الحجز مبدئي للتجربة فقط ولا يُصدَر عنه أي تذكرة فعلية.</p>
+      </div>
+
+      <!-- نموذج البحث عن رحلة -->
+            <!-- نموذج البحث عن رحلة — تصميم أنيق -->
+      <section class="card" id="flight-form">
+        <h2 class="card-title">🧭 تفاصيل رحلتك</h2>
+
+        <!-- ملخص الرحلة الحي -->
+        <div class="trip-summary" id="tripSummary" hidden>
+          <span id="tsRoute">—</span>
+          <span class="ts-dot"></span>
+          <span id="tsMeta">—</span>
+        </div>
+
+        <div class="ff-seg-row">
+          <div class="seg seg-pills" id="tripTypeSeg">
+            <button type="button" class="seg-btn active" data-t="oneway">➡️ ذهاب فقط</button>
+            <button type="button" class="seg-btn" data-t="round">↔️ ذهاب وعودة</button>
+          </div>
+        </div>
+
+        <div class="route-row">
+          <div class="field leg">
+            <label for="flightFrom">📍 من — المغادرة <span class="req">*</span></label>
+            <div class="suggest-box">
+              <input type="text" id="flightFrom" class="suggest-input" placeholder="مدينة، مطار، أو رمز IATA…" autocomplete="off" spellcheck="false">
+              <div class="suggest-list" id="flightFromSuggest" hidden></div>
+            </div>
+          </div>
+          <button type="button" id="swapBtn" class="swap-btn" title="تبديل الوجهتين">⇄</button>
+          <div class="field leg">
+            <label for="flightTo">🛬 إلى — الوصول <span class="req">*</span></label>
+            <div class="suggest-box">
+              <input type="text" id="flightTo" class="suggest-input" placeholder="مثال: دبي (DXB) أو أي رمز" autocomplete="off" spellcheck="false">
+              <div class="suggest-list" id="flightToSuggest" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-row">
+          <div class="date-cell">
+            <label for="depDate">✈️ تاريخ المغادرة <span class="req">*</span></label>
+            <input type="text" id="depDate" class="datepicker" placeholder="اضغط لاختيار التاريخ" readonly>
+          </div>
+
+          <!-- عدد الليالي: محدد أنيق يتوسط التاريخين وتُشتق منه العودة تلقائياً -->
+          <div class="nights-line" id="nightsLine" hidden>
+            <div class="nights-card">
+              <span class="nights-icon">🌙</span>
+              <div class="nights-info">
+                <b class="nights-title">عدد الليالي</b>
+                <span class="nights-hint" id="nightsHint">تُشتق العودة تلقائياً</span>
+              </div>
+              <div class="nights-stepper">
+                <button type="button" class="nights-btn" id="nightsMinus" aria-label="تقليل الليالي">−</button>
+                <div class="nights-inputwrap">
+                  <input type="text" inputmode="numeric" pattern="[0-9]*" class="nights-val" id="nightsInput" value="7" aria-label="عدد الليالي" title="اكتب عدد الليالي مباشرة ثم Enter">
+                  <span class="nights-unit" id="nightsUnit">ليالٍ</span>
+                </div>
+                <button type="button" class="nights-btn" id="nightsPlus" aria-label="زيادة الليالي">＋</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="date-cell" id="returnField">
+            <label for="retDate">🛬 تاريخ العودة</label>
+            <input type="text" id="retDate" class="datepicker" placeholder="اضغط لاختيار التاريخ" readonly>
+          </div>
+        </div>
+
+        <div class="options-row">
+          <div class="field opt">
+            <label>💺 درجة السفر</label>
+            <div class="seg" id="classSeg">
+              <button type="button" class="seg-btn active" data-c="economy">اقتصادية</button>
+              <button type="button" class="seg-btn" data-c="business">رجال الأعمال</button>
+              <button type="button" class="seg-btn" data-c="first">أولى</button>
+            </div>
+          </div>
+          <div class="field opt">
+            <label>👥 المسافرون</label>
+            <div class="pax-row">
+              <div class="pax-box">
+                <label for="adults">بالغون</label>
+                <input type="number" id="adults" min="1" max="9" value="1">
+              </div>
+              <div class="pax-box">
+                <label for="children">أطفال (2-11)</label>
+                <input type="number" id="children" min="0" max="9" value="0">
+              </div>
+              <div class="pax-box">
+                <label for="infants">رضع</label>
+                <input type="number" id="infants" min="0" max="9" value="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button id="searchFlightsBtn" class="btn btn-primary btn-lg" type="button">🔍 ابحث عن رحلات</button>
+        </div>
+        <p class="hint">💡 الأسعار على المسارات المغطاة <b>حقيقية وتُجلب لحظياً من Google Flights (عبر SerpApi وScrappa)</b>، والشركات والمطارات من قاعدة OpenFlights المدمجة (+900 شركة، +50 ألف مسار). نعرض حصرياً الرحلات الحقيقية الحية؛ وإن لم تتوفر بيانات حقيقية نظهر رسالة واضحة ولا نعرض أي رحلة وهمية أو سعر تقديري. الحجز مبدئي دائماً بلا تأكيد.</p>
+      </section>
+
+      <!-- قائمة الاقتراحات أصبحت ديناميكية عبر JavaScript (كل مطارات العالم) -->
+
+      <!-- نتائج البحث المبدئي -->
+      <section class="card" id="flight-results" hidden>
+        <h2 class="card-title">🛫 الرحلات المبدئية المتاحة</h2>
+        <!-- فلتر النتائج حسب شركة الطيران -->
+        <div class="filter-bar" id="flightsFilter" hidden></div>
+        <div id="realSearchHint" class="rsh" hidden></div>
+        <!-- مؤشر تحميل البحث — طبقة جذابة تغطي الشاشة حتى تظهر النتائج -->
+        <div id="srchLoading" class="rt-loading" hidden>
+          <div class="rt-box">
+            <span class="rt-spinner"></span>
+            <b>جارٍ البحث عن رحلاتك…</b>
+          </div>
+        </div>
+        <div id="rtHeading" class="rt-heading" hidden></div>
+        <div id="rtLoading" class="rt-loading" hidden>
+          <div class="rt-box">
+            <span class="rt-spinner"></span>
+            <b>جلب رحلات العودة…</b>
+          </div>
+        </div>
+        <div id="flightsEmpty" class="fc-empty" hidden>
+          <span class="fc-empty-icon">🛫</span>
+          <h3>لا توجد رحلات حقيقية متاحة لهذه البيانات</h3>
+          <p>نعرض حصرياً أسعاراً وتوقيتات <b>حقيقية حية</b> من Google Flights (عبر SerpApi وScrappa) — <b>ولا نعرض أبداً رحلات وهمية أو أسعاراً تقديرية</b>.<br>جرّب تاريخاً أقرب، أو مساراً مغطى بالتغطية الحية، أو أعد المحاولة بعد قليل.</p>
+        </div>
+        <div id="flightsList"></div>
+        <p class="auto-note">الأسعار لكل بالغ (ذهاب فقط أو ذهاب وعودة حسب اختيارك) — الأطفال 75% من السعر والرضع 10%. الأسعار والتوقيتات حقيقية لحظياً من Google Flights (عبر SerpApi وScrappa). الحجز هنا مبدئي ولا يُلزم بأي دفع.</p>
+      </section>
+
+      <!-- ملخص الحجز المبدئي -->
+      <section class="card" id="booking-summary" hidden>
+        <h2 class="card-title">✅ حجز مبدئي ناجح</h2>
+        <div class="pax-names" id="paxNamesBox" hidden>
+          <span class="pn-title">🧑✈️ أسماء المسافرين</span>
+          <p class="pn-hint">خانتان لكل مسافر: <b>الاسم الأول</b> و<b>اسم العائلة</b> — تُكتب في التذكرة بالصيغة <b>العائلة، الاسم</b> مثال: <b>ALOBAIDI, YAQEEN</b></p>
+          <div class="pn-rows" id="paxNamesList"></div>
+          <div class="actions-row">
+            <button id="genTicketBtn" class="btn btn-primary" type="button">🎫 إنشاء التذكرة</button>
+          </div>
+        </div>
+        <div class="bsum-grid">
+          <div class="bsum-box"><span>رقم الحجز</span><b id="bs-ref"></b></div>
+          <div class="bsum-box"><span>الرحلة</span><b id="bs-route"></b></div>
+          <div class="bsum-box"><span>تاريخ السفر</span><b id="bs-date"></b></div>
+          <div class="bsum-box"><span>الدرجة</span><b id="bs-class"></b></div>
+          <div class="bsum-box"><span>المسافرون</span><b id="bs-pax"></b></div>
+          <div class="bsum-box"><span>الموعد</span><b id="bs-time"></b></div>
+          <div class="bsum-box"><span>رقم الرحلة</span><b id="bs-flight"></b></div>
+          <div class="bsum-box"><span>الإجمالي المبدئي</span><b id="bs-total"></b></div>
+        </div>
+        <p class="auto-note">هذا حجز مبدئي غير مؤكد — لم تُصدَر أي تذاكر ولم يُخصَم أي مبلغ. للتأكيد النهائي يرجى مراجعة شركة الطيران أو وكيل السفر المعتمد.</p>
+        <div class="actions-row">
+          <button id="cancelBookingBtn" class="btn btn-danger-ghost" type="button">🗑️ إلغاء الحجز المبدئي</button>
+        </div>
+      </section>
+      <!-- ===== التذكرة: إعادة بناء حرفية من الـ PDF المرجعي (Travelport · PT Sans · LTR · ألوان A4) ===== -->
+      <section class="card" id="ticket-template" hidden>
+        <h2 class="card-title">🎟️ إثبات حجزك — إعادة بناء حرفية من النموذج المرجعي (A4 · PT Sans · LTR)</h2>
+        <p class="tkt-scrollhint">📐 الحجم الحقيقي A4 (595pt) — جرّب تكبير المتصفح لرؤية التفاصيل الدقيقة</p>
+
+        <div class="tkt-scroll">
+          <div class="tkt-sheet" dir="ltr">
+            <div class="tk-band">
+              <img class="tk-logo" src="assets/tk/logo.png" alt="MyTrip" draggable="false">
+            </div>
+            <div class="tk-mytrip">My Trip</div>
+
+            <div id="tktLegs"></div>
+
+            <div class="tk-foot">
+              <div class="tk-help">Help</div>
+              <div class="tk-frule"></div>
+              <div class="tk-res">Your Reservation Code: <b id="tk-res">------</b></div>
+              <div class="tk-agency">
+                <p class="ab">BILAD AL SAFARI TRAVEL R</p>
+                <p>Almansour</p>
+                <p>Baghdad, NA</p>
+                <p>Iraq</p>
+                <p class="ab">Phone</p>
+                <p>07700006631-BILAD AL SAFARI TRAVEL RJ BGW-BAGHD</p>
+              </div>
+              <div class="tk-cr">©2026 Travelport.</div>
+            </div>
+          </div>
+        </div>
+
+        <p class="auto-note">قالب تعليمي مُعاد بناؤه حرفياً من ملف التذكرة المرجعي — <b>ليس تذكرة فعلية</b>. المتغير فقط: أسماء المسافرين (من إدخالك)، تفاصيل رحلتك المختارة، ورقما الحجز (Confirmation Number / Your Reservation Code) يولَّدان عشوائياً.</p>
+        <div class="actions-row">
+          <button id="regenTicketBtn" class="btn btn-ghost" type="button">🎲 أكواد جديدة</button>
+          <button id="printTicketBtn" class="btn btn-primary-ghost" type="button">🖨️ طباعة</button>
+        </div>
+      </section>
+      <p class="disclaimer">
+        ⚠️ تنبيه: هذا الموقع أداة تجريبية لإنشاء حجوزات طيران <strong>مبدئية وتوضيحية فقط</strong>،
+        ولا يرتبط بأي شركة طيران أو نظام حجز فعلي، ولا يُصدِر تذاكر سفر حقيقية، ولا يجوز استخدامه كوثيقة سفر.
+      </p>
+
+    </div><!-- /#tab-flights -->
+
+    <!-- ══════ التقويم المنبثق (اختيار التاريخ) ══════ -->
+    <div class="calendar-popup" id="calPopup" hidden>
+      <div class="cal-card">
+        <div class="cal-header">
+          <button type="button" class="cal-nav" id="calPrev" aria-label="الشهر السابق">‹</button>
+          <div class="cal-title" id="calTitle"></div>
+          <button type="button" class="cal-nav" id="calNext" aria-label="الشهر التالي">›</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>الأحد</span><span>الاثنين</span><span>الثلاثاء</span><span>الأربعاء</span><span>الخميس</span><span>الجمعة</span><span>السبت</span>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+        <div class="cal-footer">
+          <span class="cal-legend" id="calLegend"></span>
+          <button type="button" class="btn btn-ghost cal-close" id="calClose">إغلاق ✖</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="site-footer no-print">
+    <p>© <span id="year"></span> كشفي — أداة شخصية لتنظيم الحسابات | بياناتك تُحفظ محلياً في متصفحك ولا تُرسل لأي خادم.</p>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="libs/html2canvas.min.js"></script>
+  <script src="libs/jspdf.umd.min.js"></script>
+  <script src="script.js"?v=27></script>
+</body>
+</html>
