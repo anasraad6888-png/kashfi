@@ -685,7 +685,13 @@ document.addEventListener("DOMContentLoaded", () => {
     $("ticket-template").scrollIntoView({ behavior: "smooth", block: "start" });
   });
   $("regenTicketBtn").addEventListener("click", () => genTicket());
-  $("printTicketBtn").addEventListener("click", () => { try { window.print(); } catch (e) { toast("🖨️ اطبع من قائمة المتصفح"); } });
+  $("printTicketBtn").addEventListener("click", () => {
+    document.body.classList.add("printing-ticket");
+    const cleanup = () => document.body.classList.remove("printing-ticket");
+    window.addEventListener("afterprint", cleanup, { once: true });
+    setTimeout(cleanup, 4000); // احتياط: لو أُلغيت الطباعة أو لم يعمل afterprint
+    try { window.print(); } catch (e) { cleanup(); toast("🖨️ اطبع من قائمة المتصفح"); }
+  });
   $("nightsInput").addEventListener("input", (e) => {
     const cleaned = e.target.value.replace(/\D/g, "");
     e.target.value = cleaned;
