@@ -730,7 +730,11 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 
 /* ============ الطباعة ============ */
 @media print {
-  @page { size: A4; margin: 8mm; }
+
+  /* الصفحة A4 بلا هامش @page — كل مكوّن يوفّر هوامشه بنفسه:
+     - كشف الحساب: statement-paper بpadding 8mm (نفس الشكل السابق)
+     - التذكرة: ورقة A4 كاملة 595×842 فتُطبع 1:1 بهوامش تصميمها الداخلية */
+  @page { size: A4 portrait; margin: 0; }
   /* إجبار طباعة الخلفيات والألوان (حتى لو كان خيار Background graphics مطفأً) */
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
@@ -742,7 +746,6 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
   #tab-flights { display: none !important; }
   #tab-account.active { display: block; }
   .statement-paper {
-    width: 100%;
     margin: 0;
     box-shadow: none;
     border-radius: 0;
@@ -1165,15 +1168,16 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 
   /* وضع طباعة التذكرة: body.printing-ticket يُضاف من زر الطباعة في JS —
      إظهار تبويب الطيران مع ورقة التذكرة فقط وإخفاء كل الواجهة الأخرى.
-     بلا transform مطلقاً (يُفسد الطباعة في عدة متصفحات ويُنتج صفحة فارغة أو قصاً):
-     الورقة بعرض منطقة الطباعة الكاملة (100%) فتتوسّط بلا قصّ ولا إطار */
+     مع @page لهامش 0 أعلاه، الورقة A4 كاملة (595×842) تُطبع 1:1
+     فتظهر هوامشها الداخلية (32.6/17.6/15/16pt) مطابقة للمرجع (32/17.5/15/28.5)
+     بلا transform ولا هوامش سالبة ولا قصّ ولا صفحات فارغة */
   body.printing-ticket #tab-account { display: none !important; }
   body.printing-ticket #tab-flights { display: block !important; }
   body.printing-ticket #tab-flights > *:not(#ticket-template) { display: none !important; }
   body.printing-ticket #ticket-template { display: block !important; border: none !important; box-shadow: none !important; background: #fff !important; padding: 0 !important; margin: 0 !important; }
   body.printing-ticket #ticket-template > :not(.tkt-scroll) { display: none !important; }
   body.printing-ticket .tkt-scroll { overflow: visible; padding: 0; }
-  body.printing-ticket .tkt-sheet { width: 100%; min-width: 0; margin: 0; }
+  body.printing-ticket .tkt-sheet { display: block; width: 595pt; min-width: 595pt; margin: 0; }
 }
 
 /* شعار الخط — يسار الاسم دائماً (LTR) */
