@@ -731,10 +731,15 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 /* ============ الطباعة ============ */
 @media print {
 
-  /* الصفحة A4 بلا هامش @page — كل مكوّن يوفّر هوامشه بنفسه:
-     - كشف الحساب: statement-paper بpadding 8mm (نفس الشكل السابق)
-     - التذكرة: ورقة A4 كاملة 595×842 فتُطبع 1:1 بهوامش تصميمها الداخلية */
-  @page { size: A4 portrait; margin: 0; }
+
+
+
+
+  /* الصفحة A4: الهوامش العمودية (أعلى 15pt / أسفل 16pt) على مستوى @page فتتكرر
+     على كل صفحة بما فيها صفحات الامتداد (تحل مشكلة الصفحة الثانية بلا هامش علوي
+     والصفحة الأولى بلا هامش سفلي). الهامشان الجانبيان صفر — عرض الورقة 1:1
+     وهوامشها الأفقية (32.6/17.6) من padding. كشف الحساب يعوّض فرق 15/16 بـ padding. */
+  @page { size: A4 portrait; margin: 15pt 0 16pt 0; }
   /* إجبار طباعة الخلفيات والألوان (حتى لو كان خيار Background graphics مطفأً) */
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
@@ -750,7 +755,8 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
     margin: 0;
     box-shadow: none;
     border-radius: 0;
-    padding: 22.68pt;
+    /* 8mm المطلوب - ما يوفره @page (أعلى 15 / أسفل 16) = القيم أدناه */
+    padding: 7.68pt 22.68pt 6.68pt 22.68pt;
     box-sizing: border-box;
   }
   main.container { display: block; }
@@ -1179,7 +1185,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
   body.printing-ticket #ticket-template { display: block !important; border: none !important; box-shadow: none !important; background: #fff !important; padding: 0 !important; margin: 0 !important; }
   body.printing-ticket #ticket-template > :not(.tkt-scroll) { display: none !important; }
   body.printing-ticket .tkt-scroll { overflow: visible; padding: 0; }
-  body.printing-ticket .tkt-sheet { display: block; width: 595pt; min-width: 595pt; margin: 0; }
+  body.printing-ticket .tkt-sheet { display: block; width: 595pt; min-width: 595pt; margin: 0; padding: 0 17.6pt 0 32.6pt; }
 }
 
 /* شعار الخط — يسار الاسم دائماً (LTR) */
