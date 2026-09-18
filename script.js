@@ -2018,7 +2018,7 @@ function itinHTML(c) {
         <span class="itn-apt">${escapeHtml(l.arrName || l.arr)} <small>${escapeHtml(l.arr)}</small></span>
       </div>
     </div>`;
-    if (!isLast) out += `<div class="itn-stop">🕐 توقف رقم ${i} — ${escapeHtml(l.arrName || l.arr)}</div>`;
+    if (!isLast) out += `<div class="itn-stop">🕐 توقف رقم ${i + 1} — ${escapeHtml(l.arrName || l.arr)}</div>`;
   });
   return out + "</div>";
 }

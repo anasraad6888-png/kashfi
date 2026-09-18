@@ -1,0 +1,18 @@
+# 🔒 أسرار — لا تُرفع أبداً
+kashfi.config.json
+.env
+.env.*
+*.env.local
+
+# ملفات محلية/نظامية
+.vercel
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
+npm-debug.log*
+
+# ملفات تطوير/نسخ احتياطية
+helvetica-neue.zip
