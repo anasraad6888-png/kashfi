@@ -827,7 +827,9 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .rt-head-inner .btn { margin-right: auto; background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.4); color: #fff; }
 .rt-head-inner .btn:hover { background: rgba(255,255,255,.3); }
 
-.rt-loading { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(246, 249, 248, .94); }
+/* مؤشر التحميل بطاقة داخل منطقة النتائج (لا يغطي الشاشة ولا يطمس شيئاً):
+   تُفرَّغ النتائج القديمة وتظهر هذه البطاقة في مكانها ثم تحل محلها النتائج الجديدة */
+.rt-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 16px; margin: 12px 0 6px; }
 .rt-loading .rt-box { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 38px; border-radius: 20px; background: #fff; box-shadow: 0 18px 46px rgba(15, 92, 78, .25); border: 1px solid var(--border); }
 .rt-loading b { font-size: 1.25rem; font-weight: 900; color: var(--primary-dark); }
 .rt-spinner { width: 58px; height: 58px; border: 6px solid rgba(15, 92, 78, .16); border-top-color: var(--primary); border-radius: 50%; animation: rt-spin .8s linear infinite; }
@@ -1195,5 +1197,4 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 /* حالة البحث: زر مشغول + مؤشر تحميل البحث العام */
 #searchFlightsBtn.busy { opacity: .62; cursor: progress; pointer-events: none; }
 #flight-results { position: relative; }
-#srchLoading, #rtLoading { z-index: 600; }
 #srchLoading b { font-size: 1.15rem; }

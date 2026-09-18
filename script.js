@@ -879,8 +879,14 @@ function initAirportSuggestions() {
     btn.disabled = true;
     const ldr = $("srchLoading");
     const sec = $("flight-results");
-    if (ldr) ldr.hidden = false;      // مؤشر تحميل أنيق
     sec.hidden = false;               // كشف منطقة النتائج مبكراً ليستقر التمرير قبل الوصول
+    // تفريغ أي نتائج وعناوين سابقة كلياً لتظهر بطاقة مؤشر التحميل وحدها مكانها (بلا blur)
+    $("#flightsList").innerHTML = "";
+    const fb = $("flightsFilter"); if (fb) fb.hidden = true;
+    setEmpty(false);
+    rtHeading(null);
+    const rh = $("realSearchHint"); if (rh) rh.hidden = true;
+    if (ldr) ldr.hidden = false;      // بطاقة مؤشر التحميل داخل منطقة النتائج
     setTimeout(() => sec.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     let res;
     try {
@@ -1680,6 +1686,7 @@ function setEmpty(show) {
 }
 
 function renderFlights(flights) {
+  const sl = $("srchLoading"); if (sl) sl.hidden = true;  // المؤشر يختفي فور ظهور النتائج
   rtLoading(false);
   setEmpty(flights.length === 0);
   resultCache = flights;
@@ -1727,6 +1734,9 @@ async function selectRoundOutbound(i) {
   if (!card._departureToken) { toast("ℹ️ هذه الرحلة لا تدعم جلب رحلات العودة — اختر أخرى"); return; }
   roundLoading = true;
   rtHeading(null);
+  // إخفاء نتائج الذهاب كلياً لتظهر بطاقة مؤشر تحميل العودة وحدها (بلا blur)
+  $("#flightsList").innerHTML = "";
+  setEmpty(false);
   rtLoading(true, "جلب رحلات العودة لرحلتك المختارة…");
   const cards = await scrappaRoundReturns(card);
   roundLoading = false;
