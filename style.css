@@ -746,10 +746,12 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
   #tab-flights { display: none !important; }
   #tab-account.active { display: block; }
   .statement-paper {
+    width: 100%;
     margin: 0;
     box-shadow: none;
     border-radius: 0;
-    padding: 0;
+    padding: 22.68pt;
+    box-sizing: border-box;
   }
   main.container { display: block; }
   .container { padding: 0; max-width: 100%; }
