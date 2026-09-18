@@ -1,0 +1,3 @@
+def find_value(body, key):
+    m = re.search(rb'/' + key + rb'\s+(<<.*?>>|\[.*?\]|\(.*?\)|[/\w.\-]+|\d+\s+\d+\s+R)', body, re.S)
+    return m.group(1) if m else None

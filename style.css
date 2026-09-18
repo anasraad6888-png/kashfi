@@ -1160,20 +1160,20 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .tk-cr { font-size: 6.8pt; color: #000; text-align: center; margin-top: 9pt; }
 
 @media print {
-  /* التذكرة بلا ظلال/حواف الشاشة */
+  /* التذكرة بلا حدود أو ظلال (حدود الشاشة تظهر كإطار عند الطباعة) */
   .tkt-sheet { box-shadow: none; border: none; border-radius: 0; }
 
   /* وضع طباعة التذكرة: body.printing-ticket يُضاف من زر الطباعة في JS —
-     يُظهر تبويب الطيران مع ورقة التذكرة فقط ويُخفي كل الواجهة الأخرى
-     (الكشف الحسابي + نموذج البحث + النتائج + التنبيهات). تُصغَّر الورقة
-     قليلاً (595pt A4 → 92%) لتناسب هامش @page العام 8mm بلا قصّ ولا صفحات فارغة */
+     إظهار تبويب الطيران مع ورقة التذكرة فقط وإخفاء كل الواجهة الأخرى.
+     بلا transform مطلقاً (يُفسد الطباعة في عدة متصفحات ويُنتج صفحة فارغة أو قصاً):
+     الورقة بعرض منطقة الطباعة الكاملة (100%) فتتوسّط بلا قصّ ولا إطار */
   body.printing-ticket #tab-account { display: none !important; }
   body.printing-ticket #tab-flights { display: block !important; }
   body.printing-ticket #tab-flights > *:not(#ticket-template) { display: none !important; }
-  body.printing-ticket #ticket-template { display: block !important; }
+  body.printing-ticket #ticket-template { display: block !important; border: none !important; box-shadow: none !important; background: #fff !important; padding: 0 !important; margin: 0 !important; }
   body.printing-ticket #ticket-template > :not(.tkt-scroll) { display: none !important; }
   body.printing-ticket .tkt-scroll { overflow: visible; padding: 0; }
-  body.printing-ticket .tkt-sheet { width: 595pt; min-width: 595pt; margin: 0 auto; transform: scale(.92); transform-origin: top center; }
+  body.printing-ticket .tkt-sheet { width: 100%; min-width: 0; margin: 0; }
 }
 
 /* شعار الخط — يسار الاسم دائماً (LTR) */
