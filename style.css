@@ -862,7 +862,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .itn-single { display: flex; align-items: center; gap: 10px; justify-content: center; font-weight: 800; color: var(--primary-dark); font-size: .85rem; }
 
 
-/* ============ لا توجد رحلات حقيقية (الفراغ الواضح بدل أي وهمي) ============ */
+/* ============ لا توجد رحلات متاحة (الفراغ الواضح بدل أي وهمي) ============ */
 .fc-empty { margin: 16px 0 8px; padding: 30px 22px; border: 1.5px dashed var(--primary); border-radius: var(--radius); background: var(--primary-light); text-align: center; }
 .fc-empty-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; }
 .fc-empty h3 { margin: 0 0 10px; color: var(--primary-dark); font-weight: 900; font-size: 1.15rem; }

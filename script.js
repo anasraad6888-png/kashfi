@@ -204,7 +204,7 @@ function readAccountForm() {
 /* ---------- الحركات مرتبة زمنياً + الرصيد التراكمي ---------- */
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-/* رقم عملية: 33 + 8 أرقام عشوائية (10 مراتب مثل الكشوف الحقيقية) */
+/* رقم عملية: 33 + 8 أرقام عشوائية (10 مراتب مثل الكشوف الفعلية) */
 function randomTxRef() {
   let s = "";
   for (let i = 0; i < 8; i++) s += Math.floor(Math.random() * 10);
@@ -219,7 +219,7 @@ function randomDate(from, to) {
   return toYmd(new Date(f.getTime() + Math.random() * (t.getTime() - f.getTime())));
 }
 
-/* أسماء حقيقية ظهرت في الكشوف المستخرجة */
+/* أسماء ظهرت في الكشوف المستخرجة */
 const P2P_NAMES = [
   "MOHAMMED", "AHMED", "ALI", "HASAN HADI", "SADDAM HAMEED", "SADEEM BASIM",
   "OMAR AMMAR FARIS", "NOORULDEEN ALI", "AHMED RAAD", "HIBA ZUHAIR",
@@ -231,7 +231,7 @@ const P2P_NAMES = [
   "ASHRAF KIFAH", "MAYTHAM ALRUKABI KADHIM", "MOHAMMED HASAN", "LAYDH SALIM",
 ];
 
-/* رسوم متكررة (الأكثر شيوعاً في الكشوف الحقيقية) */
+/* رسوم متكررة (الأكثر شيوعاً في الكشوف) */
 const FEES = [
   "01003211",
   "Card to Card Transfer MobApp Fee",
@@ -877,7 +877,7 @@ function initAirportSuggestions() {
   // تفعيل الاقتراح الفوري لمطارات العالم
   initAirportSuggestions();
 
-  // بحث عن رحلات (حقيقية عبر API أو تجريبية)
+  // بحث عن رحلات (عبر API أو تجريبية)
   $("searchFlightsBtn").addEventListener("click", async () => {
     const btn = $("searchFlightsBtn");
     if (btn.classList.contains("busy")) return;
@@ -910,7 +910,7 @@ function initAirportSuggestions() {
     } else {
       rtHeading(null);
     }
-    if (res.flights.length) toast(`🔎 ${res.flights.length} رحلات حقيقية (${res.source}) — أسعار بالدولار`);
+    if (res.flights.length) toast(`🔎 ${res.flights.length} رحلات (${res.source}) — أسعار بالدولار`);
   });
 
   // تدفق ذهاب/عودة بخطوتين: اختيار رحلة الذهاب بالضغط على الكرت ثم جلب رحلات العودة
@@ -1474,7 +1474,7 @@ function addMinutes(h, m, mins) {
 }
 
 /* =========================================================
-   الأسعار الحقيقية من Google Flights (SerpApi) ثم Scrappa عبر وسيط الخادم
+   الأسعار من Google Flights (SerpApi) ثم Scrappa عبر وسيط الخادم
    تُطبع النتائج مباشرة في شكل بطاقات مع وسم المصدر (serpapi / scrappa).
    تعيد [] عندما تغطية فارغة للمسار، و null عند خطأ تقني.
    ========================================================= */
@@ -1648,16 +1648,16 @@ async function searchFlights() {
     try {
       const out = await scrappaRoundStep1(f);
       if (out && out.length) {
-        return { flights: out, real: true, source: "رحلات الذهاب الحقيقية — اختر ذهاباً لعرض رحلات العودة", roundStep: 1 };
+        return { flights: out, real: true, source: "رحلات الذهاب — اختر ذهاباً لعرض رحلات العودة", roundStep: 1 };
       }
     } catch (e) { /* لا شيء */ }
     return { flights: [], real: true, empty: true, roundStep: 1 };
   }
 
-  // ===== الأسعار الحقيقية: وسيط Google Flights (SerpApi/Scrappa) عبر الخادم =====
+  // ===== الأسعار: وسيط Google Flights (SerpApi/Scrappa) عبر الخادم =====
   const realDeals = await serpFlightsSearch(f);
   if (realDeals && realDeals.length) {
-    return { flights: realDeals, real: true, source: "أسعار حقيقية من Google Flights (SerpApi/Scrappa)" };
+    return { flights: realDeals, real: true, source: "أسعار من Google Flights (SerpApi/Scrappa)" };
   }
   return { flights: [], real: true, empty: true };
 }
@@ -2088,7 +2088,7 @@ function cardHTML(c) {
     <span>⏱ ${escapeHtml(dur)}</span>
     <span>🛬 ${escapeHtml(c.stops || "مباشر")}</span>
     <span>💺 ${escapeHtml(cls)}</span>
-    ${c.realPrice ? `<span class="rb">✓ سعر حقيقي · ${escapeHtml(gateLbl)}</span>` : ""}
+    ${c.realPrice ? `<span class="rb">✓ ${escapeHtml(gateLbl)}</span>` : ""}
   </div>
   ${itinHTML(c)}
   <div class="fc-price-row">
