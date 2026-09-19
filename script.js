@@ -881,7 +881,7 @@ function initAirportSuggestions() {
     const sec = $("flight-results");
     sec.hidden = false;               // كشف منطقة النتائج مبكراً ليستقر التمرير قبل الوصول
     // تفريغ أي نتائج وعناوين سابقة كلياً لتظهر بطاقة مؤشر التحميل وحدها مكانها (بلا blur)
-    $("#flightsList").innerHTML = "";
+    $("flightsList").innerHTML = "";
     const fb = $("flightsFilter"); if (fb) fb.hidden = true;
     setEmpty(false);
     rtHeading(null);
@@ -1735,7 +1735,7 @@ async function selectRoundOutbound(i) {
   roundLoading = true;
   rtHeading(null);
   // إخفاء نتائج الذهاب كلياً لتظهر بطاقة مؤشر تحميل العودة وحدها (بلا blur)
-  $("#flightsList").innerHTML = "";
+  $("flightsList").innerHTML = "";
   setEmpty(false);
   rtLoading(true, "جلب رحلات العودة لرحلتك المختارة…");
   const cards = await scrappaRoundReturns(card);
