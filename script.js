@@ -944,7 +944,7 @@ function initAirportSuggestions() {
     $("ticket-template").hidden = true;
     lastFlight = null;
     lastReturn = null;
-    toast("🗑️ تم إلغاء الحجز المبدئي");
+    toast("🗑️ تم إلغاء تحديد الرحلة");
   });
 
 });
@@ -1289,7 +1289,7 @@ function genTicket() {
   }
   $("tktLegs").innerHTML = segs.map((sg) => tktLegHTML(sg.l, conf, paxList, clsEng, sg.airline, sg.code, sg.flightNo, sg.dateStr)).join("");
   tkt.hidden = false;
-  toast(`🎟️ Confirmation Number: ${conf} · Your Reservation Code: ${res}`);
+  toast(`✅ تم إنشاء التذكرة بنجاح — رقم الحجز: ${conf} · رمز الحجز: ${res}`);
 }
 
 /* الليالي محرك فعلي: تاريخ العودة = المغادرة + عدد الليالي (تلقائياً) */
@@ -1807,7 +1807,8 @@ function confirmRoundBooking(out, ret) {
   buildPaxNameRows();
   $("paxNamesBox").hidden = false;
   $("ticket-template").hidden = false;
-  toast(`✅ حجز مبدئي ناجح — ${ref} · ${fmtNum(total, "USD")} USD`);
+  $("paxNamesBox").scrollIntoView({ behavior: "smooth", block: "center" }); // تمرير تلقائي إلى حقول أسماء المسافرين
+  toast(`👥 رحلتك محددة ✓ — أدخل أسماء المسافرين الآن ثم اضغط «إنشاء التذكرة» لإتمام الحجز`);
 }
 
 /* حجز مبدئي لرحلة ذهاب فقط — مثل ملخص العودة مع بطاقة واحدة */
@@ -1843,7 +1844,8 @@ function confirmBooking(card) {
   buildPaxNameRows();
   $("paxNamesBox").hidden = false;
   $("ticket-template").hidden = false;
-  toast(`✅ حجز مبدئي ناجح — ${ref} · ${fmtNum(total, "USD")} USD`);
+  $("paxNamesBox").scrollIntoView({ behavior: "smooth", block: "center" }); // تمرير تلقائي إلى حقول أسماء المسافرين
+  toast(`👥 رحلتك محددة ✓ — أدخل أسماء المسافرين الآن ثم اضغط «إنشاء التذكرة» لإتمام الحجز`);
 }
 
 /* =========================================================
@@ -2070,7 +2072,7 @@ function cardHTML(c) {
   const priceCaption = c._package ? "سعر الباقة لكل بالغ" : "السعر لكل بالغ";
   const btn = (isOut || isRet)
     ? ""
-    : `<button type="button" class="btn btn-primary" data-book="${c._idx}">🎟️ حجز مبدئي</button>`;
+    : `<button type="button" class="btn btn-primary" data-book="${c._idx}">🎟️ اختر الرحلة</button>`;
   return `<div class="flight-card${selectable}" ${data}>
   <div class="fc-head">
     <span class="fc-airline">${airlineLogo(c.code, c.airline)} ${escapeHtml(c.airline)}</span>
