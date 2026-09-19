@@ -849,6 +849,11 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .itn-apt small { color: var(--muted); font-size: .66rem; font-weight: 700; }
 .itn-time { font-size: .78rem; font-weight: 800; color: var(--text); }
 .itn-plus { color: var(--danger); font-style: normal; font-weight: 900; background: #fdecea; border-radius: 6px; padding: 0 5px; margin-inline-start: 2px; }
+/* تاريخ الانطلاق والوصول داخل الكرت — يُحمرّ تاريخ الوصول عند وصول اليوم التالي */
+.fc-date { display: block; font-size: .72rem; font-weight: 800; color: var(--muted); margin-top: 2px; letter-spacing: .5px; }
+.fc-date-warn { color: var(--danger); font-weight: 900; background: #fdecea; border-radius: 6px; padding: 0 5px; }
+.itn-date { display: block; font-size: .68rem; font-weight: 800; color: var(--muted); margin-top: 1px; }
+.itn-date-warn { color: var(--danger); font-weight: 900; }
 .itn-route { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0 6px; min-width: 70px; }
 .itn-air { font-size: .68rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
 .itn-line { color: var(--primary); font-size: .85rem; letter-spacing: 1px; user-select: none; }

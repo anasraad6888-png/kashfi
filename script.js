@@ -49,6 +49,12 @@ function fmtSigned(t) {
 }
 
 function fmtDateSlash(iso) { return iso ? iso.replaceAll("-", "/") : ""; }
+/* عدد الأيام بين تاريخين ISO — لكشف وصول اليوم التالي */
+function isoDayDiff(a, b) {
+  const A = new Date((a || "") + "T00:00:00"), B = new Date((b || "") + "T00:00:00");
+  if (isNaN(A.getTime()) || isNaN(B.getTime())) return 0;
+  return Math.max(0, Math.round((B - A) / 86400000));
+}
 
 function generateAccountNumber() {
   let suffix = "";
@@ -1538,7 +1544,9 @@ function googleToCard(it, f, from, to, db, requested, sourceLabel) {
     stops: segCount <= 1 ? "مباشر" : `${segCount - 1} توقف`,
     price: Math.max(1, Math.round(it.price || 0)),
     realPrice: true, gate: sourceLabel === "scrappa" ? "scrappa" : "serpapi",
-    depIso: depRaw.slice(0, 10), retIso: f.retDate,
+    depIso: depRaw.slice(0, 10),
+    arrIso: arrRaw.slice(0, 10), // تاريخ الوصول الفعلي — لكشف وصول اليوم التالي
+    retIso: f.retDate,
     legs,
     _diff: Math.abs(dep - requested),
   };
@@ -2021,6 +2029,7 @@ function itinHTML(c) {
       <div class="itn-cell">
         <span class="itn-tag">${i === 0 ? "انطلاق" : "توقف"}</span>
         <span class="itn-time">${timeHM(l.depTime)}</span>
+        ${l.depTime ? `<span class="itn-date">${escapeHtml(fmtDateSlash(l.depTime.slice(0, 10)))}</span>` : ""}
         <span class="itn-apt">${escapeHtml(l.depName || l.dep)} <small>${escapeHtml(l.dep)}</small></span>
       </div>
       <div class="itn-route">
@@ -2031,6 +2040,7 @@ function itinHTML(c) {
       <div class="itn-cell ${isLast ? "itn-arr" : ""}">
         <span class="itn-tag">${isLast ? "وصول" : "محطة"}</span>
         <span class="itn-time">${timeHM(l.arrTime)}${l.dayDiff ? `<i class="itn-plus">+${l.dayDiff}</i>` : ""}</span>
+        ${l.arrTime ? `<span class="itn-date${l.dayDiff ? " itn-date-warn" : ""}">${escapeHtml(fmtDateSlash(l.arrTime.slice(0, 10)))}</span>` : ""}
         <span class="itn-apt">${escapeHtml(l.arrName || l.arr)} <small>${escapeHtml(l.arr)}</small></span>
       </div>
     </div>`;
@@ -2048,6 +2058,11 @@ function cardHTML(c) {
   const gateLbl = c.gate === "scrappa" ? "Scrappa" : "Google Flights";
   const dur = String(c.duration || "").trim() || "—";
   const cls = CLASS_LABEL[c.cls] || c.cls || "اقتصادية";
+  /* تواريخ الانطلاق والوصول — يُحمرّ تاريخ الوصول إن كان في اليوم التالي أو بعده */
+  const depDate = c.depIso ? fmtDateSlash(c.depIso) : (c.date || "");
+  const arrDate = c.arrIso ? fmtDateSlash(c.arrIso) : depDate;
+  const dayN = isoDayDiff(c.depIso, c.arrIso);
+  const arrWarn = dayN > 0;
   let priceNote;
   if (c._package) priceNote = "الباقة كاملة (ذهاب وعودة) لكل بالغ";
   else if (c._startingPrice) priceNote = "سعر يبدأ منه — لكل بالغ (ذهاب)";
@@ -2062,9 +2077,9 @@ function cardHTML(c) {
     <span class="fc-num">${escapeHtml(c.flightNo)}</span>
   </div>
   <div class="fc-route">
-    <div class="fc-leg"><small>${escapeHtml(c.fromCode)}</small><b>${timeHM(c.depTime)}</b></div>
+    <div class="fc-leg"><small>${escapeHtml(c.fromCode)}</small><b>${timeHM(c.depTime)}</b><i class="fc-date">${escapeHtml(depDate)}</i></div>
     <span class="fc-arrow">←</span>
-    <div class="fc-leg"><small>${escapeHtml(c.toCode)}</small><b>${escapeHtml(c.arrTime)}</b></div>
+    <div class="fc-leg"><small>${escapeHtml(c.toCode)}</small><b>${escapeHtml(c.arrTime)}</b><i class="fc-date${arrWarn ? " fc-date-warn" : ""}">${escapeHtml(arrDate)}</i>${arrWarn ? `<i class="itn-plus">+${dayN}يوم</i>` : ""}</div>
   </div>
   <div class="fc-meta">
     <span>📅 ${escapeHtml(c.date)}</span>
