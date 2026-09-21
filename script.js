@@ -1265,6 +1265,11 @@ function genTicket() {
   if (!tkt) return;
   const form = readFlightForm();
   const f = lastFlight;
+  /* خاتم الوكالة في التذييل: الملكية الأردنية (R / RJ BGW-BAGHD) — وباقي الخطوط (Q / QR-BAGHDAD) */
+  const rjFooter = !!(f && String(f.code || "").toUpperCase() === "RJ");
+  const abEl = $("tk-ab"), phEl = $("tk-ph");
+  if (abEl) abEl.textContent = "BILAD AL SAFARI TRAVEL " + (rjFooter ? "R" : "Q");
+  if (phEl) phEl.textContent = "07700006631-BILAD AL SAFARI TRAVEL " + (rjFooter ? "RJ BGW-BAGHD" : "QR-BAGHDAD");
   const conf = tktCode();
   const res = tktCode();
   $("tk-res").textContent = res;
