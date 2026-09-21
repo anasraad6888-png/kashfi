@@ -1125,7 +1125,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 
 /* كتلة رحلة: سطر المسار + فصل أسود + الجسم */
 .tk-leg { margin-top: 11pt; }
-.tk-route { font-size: 7.9pt; font-weight: 400; color: #000; }
+.tk-route { font-size: 7.9pt; font-weight: 400; color: #000; white-space: nowrap; }
 .tk-route .d { display: inline-block; width: 67.4pt; font-weight: 700; }
 .ic-check { width: 7.9pt; height: auto; vertical-align: -1pt; }
 .tk-rule { height: 0.57pt; background: #000; margin: 4pt 0 6pt; } /* بعرض المحتوى كفاصل Help — لا يلتصق بحواف الورقة */
