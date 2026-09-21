@@ -1270,6 +1270,9 @@ function genTicket() {
   const abEl = $("tk-ab"), phEl = $("tk-ph");
   if (abEl) abEl.textContent = "BILAD AL SAFARI TRAVEL " + (rjFooter ? "R" : "Q");
   if (phEl) phEl.textContent = "07700006631-BILAD AL SAFARI TRAVEL " + (rjFooter ? "RJ BGW-BAGHD" : "QR-BAGHDAD");
+  /* سنة حقوق النشر تعكس السنة الحالية تلقائياً */
+  const crEl = $("tk-cr");
+  if (crEl) crEl.textContent = "©" + new Date().getFullYear() + " Travelport.";
   const conf = tktCode();
   const res = tktCode();
   $("tk-res").textContent = res;
