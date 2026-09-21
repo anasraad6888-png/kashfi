@@ -726,6 +726,63 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(cleanup, 4000); // احتياط: لو أُلغيت الطباعة أو لم يعمل afterprint
     try { window.print(); } catch (e) { cleanup(); toast("🖨️ اطبع من قائمة المتصفح"); }
   });
+
+  /* ═══ ⬇️ PDF احترافي: التقاط التذكرة وتوليد PDF بميتاداتا مرجعية (بدون أي معلومة إنشاء) ═══ */
+  $("pdfTicketBtn").addEventListener("click", async () => {
+    const tpl = $("ticket-template");
+    const sheet = tpl ? tpl.querySelector(".tkt-sheet") : null;
+    if (!sheet) { toast("⚠️ أنشئ التذكرة أولاً ثم نزّل PDF"); return; }
+    toast("⏳ جاري تجهيز PDF الاحترافي…");
+    await new Promise((r) => setTimeout(r, 60));
+    const prev = {
+      border: sheet.style.border, borderRadius: sheet.style.borderRadius,
+      boxShadow: sheet.style.boxShadow, padding: sheet.style.padding,
+      width: sheet.style.width, minHeight: sheet.style.minHeight,
+    };
+    /* محاكاة مرئية الطباعة: بلا حدود/ظلال، بهوامش الورقة، بارتفاع A4 تام 842pt */
+    sheet.style.border = "none"; sheet.style.borderRadius = "0"; sheet.style.boxShadow = "none";
+    sheet.style.padding = "0 17.6pt 0 32.6pt"; sheet.style.width = "595pt"; sheet.style.minHeight = "842pt";
+    try {
+      await new Promise((r) => setTimeout(r, 120)); /* فرصة لتطبيق العرض قبل الالتقاط */
+      const canvas = await html2canvas(sheet, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const imgW = 210, imgH = (canvas.height * imgW) / canvas.width, pageH = 297;
+      let y = 0, first = true;
+      while (true) {
+        if (!first) pdf.addPage();
+        first = false;
+        pdf.addImage(imgData, "JPEG", 0, -y, imgW, imgH);
+        y += pageH;
+        if (y >= imgH - 1) break;
+      }
+      /* ميتاداتا احترافية بدل التلقائية (jsPDF لا يكتب /Creator أصلاً → الإخفاء تام) */
+      const info = "/Title (Travelport Viewtrip - My Trip)"
+        + "\n/Subject (Designed exclusively for users booking travel through a Travelport-powered agency, Travelport ViewTrip is the ultimate itinerary manager.)"
+        + "\n/Keywords (ViewTrip, Travelport, itinerary management, itinerary, flights, hotels, travel agent, assistant, view trip, trips)"
+        + "\n/Producer (Winnovative HTML to PDF Converter 12.15)";
+      let out = pdf.output();
+      out = out.replace(/\/Producer \(jsPDF [^)]*\)/, info);
+      const b64 = btoa(unescape(encodeURIComponent(out)));
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const blob = new Blob([arr], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = ticketPrintTitle().replace(/[\\/:*?"<>|]/g, "-") + ".pdf";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      toast("✅ تم تنزيل PDF بميتاداتا احترافية");
+    } catch (err) {
+      console.error(err);
+      toast("⚠️ تعذر إنشاء PDF — حاول مجدداً");
+    } finally {
+      for (const k in prev) sheet.style[k] = prev[k];
+    }
+  });
   $("nightsInput").addEventListener("input", (e) => {
     const cleaned = e.target.value.replace(/\D/g, "");
     e.target.value = cleaned;
