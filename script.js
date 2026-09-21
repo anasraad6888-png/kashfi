@@ -1214,7 +1214,7 @@ function tktLegHTML(l, conf, paxList, clsEng, airline, code, flightNo, dateStr) 
   /* الصيغة القانونية للشركة بين القوسين (مثل Q.C.S.C) لكل خط يعتمدها فعلياً في التذاكر */
   const legalS = TKT_LEGAL[String(code).toUpperCase()];
   const airSuf = legalS ? ` (${legalS})` : "";
-  const logo = code && code !== "——" ? `<img class="al-tk" src="${logoUrl(code)}" alt="" draggable="false" onerror="this.remove()">` : "";
+  const logo = code && code !== "——" ? `<img class="al-tk${String(code).toUpperCase() === "QR" ? " al-tk-qr" : ""}" src="${logoUrl(code)}" alt="" draggable="false" onerror="this.remove()">` : "";
   const air = `${logo}<span class="tk-airn">${escapeHtml(engAir)}${airSuf}</span> (${escapeHtml(code)}) ${escapeHtml(l.flight || flightNo)}`;
   return `<div class="tk-leg">
   <div class="tk-route">${route}</div>

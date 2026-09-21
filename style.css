@@ -1197,6 +1197,8 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 
 /* شعار الخط — يسار الاسم دائماً (LTR) */
 .al-tk { position: absolute; left: -13.2pt; top: 1.5pt; width: 8pt; height: 8pt; object-fit: contain; }
+/* لوكو القطرية في التذكرة أكبر (الشعار عريض وشفاف 16×9pt بنفس نسبة الطول/العرض) */
+.al-tk-qr { width: 16pt; height: 9pt; left: -21.2pt; top: 0.5pt; }
 .tk-airn { font-weight: 400; }
 
 /* حالة البحث: زر مشغول + مؤشر تحميل البحث العام */
