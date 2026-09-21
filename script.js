@@ -691,9 +691,37 @@ document.addEventListener("DOMContentLoaded", () => {
     $("ticket-template").scrollIntoView({ behavior: "smooth", block: "start" });
   });
   $("regenTicketBtn").addEventListener("click", () => genTicket());
+  /* عنوان طباعة التذكرة = تكت + أسماء المسافرين الفعلية (first_family) مفصولة بـ"، "
+     وإن لم يُدخل أي اسم: "تكت طيران" */
+  const ticketPrintTitle = () => {
+    const box = $("paxNamesList");
+    const map = {};
+    const order = [];
+    if (box) {
+      box.querySelectorAll("input").forEach((inp) => {
+        const k = inp.dataset.paxKey, kind = inp.dataset.paxKind;
+        if (!k) return;
+        if (!map[k]) { map[k] = { first: "", family: "" }; order.push(k); }
+        const v = (inp.value || "").trim();
+        if (kind === "first") map[k].first = v; else map[k].family = v;
+      });
+    }
+    const names = order.map((k) => {
+      const first = map[k].first, family = map[k].family;
+      if (first && family) return `${first.toUpperCase()}_${family.toUpperCase()}`;
+      const any = (first || family).trim();
+      return any ? any.toUpperCase() : "";
+    }).filter(Boolean);
+    return "تكت " + (names.length ? names.join("، ") : "طيران");
+  };
   $("printTicketBtn").addEventListener("click", () => {
     document.body.classList.add("printing-ticket");
-    const cleanup = () => document.body.classList.remove("printing-ticket");
+    const oldTitle = document.title;
+    document.title = ticketPrintTitle();
+    const cleanup = () => {
+      document.body.classList.remove("printing-ticket");
+      document.title = oldTitle;
+    };
     window.addEventListener("afterprint", cleanup, { once: true });
     setTimeout(cleanup, 4000); // احتياط: لو أُلغيت الطباعة أو لم يعمل afterprint
     try { window.print(); } catch (e) { cleanup(); toast("🖨️ اطبع من قائمة المتصفح"); }
