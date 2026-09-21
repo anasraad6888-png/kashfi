@@ -1669,7 +1669,7 @@ async function searchFlights() {
 /* لوكو الخطوط الجوية القطرية (QR) من مجلد المشروع — والباقي من CDN الشعارات */
 const logoUrl = (code) => {
   const c = String(code || "").toUpperCase();
-  if (c === "QR") return "QR_LOGO/QR_LOGO.jpg.jpeg";
+  if (c === "QR") return "QR_LOGO/new_qr.png"; // لوكو القطرية المفرّغ عالي الوضوح من مجلد المشروع
   return `https://images.kiwi.com/airlines/64/${c}.png`;
 };
 
