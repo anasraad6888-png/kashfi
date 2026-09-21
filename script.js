@@ -1666,7 +1666,12 @@ async function searchFlights() {
    شعارات شركات الطيران — تُجلَب من CDN مفرّغ ومرن من Kiwi.com
    حسب رمز الشركة IATA، مع بديل ملوّن بالأحرف عند غياب اللوكو
    ========================================================= */
-const logoUrl = (code) => `https://images.kiwi.com/airlines/64/${String(code || "").toUpperCase()}.png`;
+/* لوكو الخطوط الجوية القطرية (QR) من مجلد المشروع — والباقي من CDN الشعارات */
+const logoUrl = (code) => {
+  const c = String(code || "").toUpperCase();
+  if (c === "QR") return "QR_LOGO/QR_LOGO.jpg.jpeg";
+  return `https://images.kiwi.com/airlines/64/${c}.png`;
+};
 
 function logoFallback(name) {
   const parts = String(name || "").trim().split(/\s+/).filter((w) => /[A-Za-z\u0600-\u06FF]/.test(w));
