@@ -734,6 +734,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!sheet) { toast("⚠️ أنشئ التذكرة أولاً ثم نزّل PDF"); return; }
     toast("⏳ جاري تجهيز PDF الاحترافي…");
     await new Promise((r) => setTimeout(r, 60));
+    /* ⚠️ التذكرة داخل #tab-flights (.tab-panel display:none ما لم يكن نشطاً) —
+       إظهار التبويب مؤقتاً وقت الالتقاط كي لا تصبح أبعاد الـ sheet 0×0 */
+    const tab = sheet.closest(".tab-panel");
+    const tabWasHidden = tab && getComputedStyle(tab).display === "none";
+    const prevTabDisplay = tab ? tab.style.display : null;
+    if (tabWasHidden) tab.style.display = "block";
     const prev = {
       border: sheet.style.border, borderRadius: sheet.style.borderRadius,
       boxShadow: sheet.style.boxShadow, padding: sheet.style.padding,
@@ -781,6 +787,10 @@ document.addEventListener("DOMContentLoaded", () => {
       toast("⚠️ تعذر إنشاء PDF — حاول مجدداً");
     } finally {
       for (const k in prev) sheet.style[k] = prev[k];
+      if (tabWasHidden) {
+        if (prevTabDisplay) tab.style.display = prevTabDisplay;
+        else tab.style.removeProperty("display");
+      }
     }
   });
   $("nightsInput").addEventListener("input", (e) => {
@@ -1723,6 +1733,86 @@ async function scrappaRoundReturns(card) {
   return cards;
 }
 
+/* =========================================================
+   البديل المحلي: يولّد رحلات توضيحية من قاعدة /data المدمجة
+   عند تعذّر الوصول لخادم الرحلات (فتح الملف مباشرة، توقف الخادم،
+   أو انقطاع المفاتيح/النتائج الخارجية) — أسعار رمزية للعرض التجريبي فقط.
+   ========================================================= */
+/* كرت توضيحي محلي واحد — يُبنى لأي اتجاه (ذهاب أو عودة) من المطارين الممرَّرين */
+function buildLocalCard(db, f, depApt, arrApt, i, depISO, requested, retIso) {
+  const key = `${depApt.iata}-${arrApt.iata}`;
+  const carriers = (db.routes && db.routes[key] && db.routes[key].length)
+    ? db.routes[key].slice(0, 6)
+    : ["QR", "EK", "ET", "TK", "SV", "GF"]; // لا مسار مباشر مسجّل → شركات عامة للعرض
+  const code = String(carriers[i % carriers.length]).toUpperCase();
+  const airline = airlineName(code, db, null);
+  const depTime = new Date(new Date(depISO + "T06:00:00").getTime() + (58 * i + 7) * 60000);
+  const durMin = 145 + ((i * 43) % 160) + (i % 3 === 0 ? 95 : 0); // 145–400 دقيقة توضيحية
+  const arrTime = new Date(depTime.getTime() + durMin * 60000);
+  const plusDays = Math.max(0, Math.floor((arrTime - depTime) / 86400000));
+  const arrIso = arrTime.toISOString().slice(0, 10);
+  const flightNo = `${code} ${(78 + i * 17) % 990}`;
+  const price = 165 + i * 34 + (durMin > 300 ? 60 : 0);
+  const hh = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return {
+    airline, code, flightNo,
+    trip: f.trip, cls: f.cls,
+    fromName: depApt.city, fromCode: depApt.iata,
+    toName: arrApt.city, toCode: arrApt.iata,
+    date: fmtDateSlash(depISO),
+    depTime: hh(depTime),
+    arrTime: hh(arrTime) + (plusDays ? ` (+${plusDays})` : ""),
+    duration: `${Math.floor(durMin / 60)}س ${durMin % 60}د`,
+    stops: "مباشر",
+    price,
+    realPrice: false, gate: "local",
+    depIso: depISO, arrIso, retIso: retIso || "",
+    legs: [{
+      dep: depApt.iata, depName: depApt.name, depTime: hh(depTime),
+      arr: arrApt.iata, arrName: arrApt.name, arrTime: hh(arrTime),
+      flight: flightNo, airline, duration: durMin, dayDiff: plusDays,
+    }],
+    _diff: Math.abs(depTime - requested),
+  };
+}
+
+/* رحلات توضيحية محلية لمسار البحث (ذهاب، أو الخطوة الأولى في ذهاب/عودة) */
+async function localFallbackFlights(f) {
+  const db = await loadFlightDB();
+  if (!db || !db.airports) return null;
+  const from = resolveAirport(f.fromRaw, db.airports);
+  const to = resolveAirport(f.toRaw, db.airports);
+  if (!from || !to || from.iata === to.iata) return null;
+  const requested = new Date(f.depDate + "T00:00:00");
+  const cards = [];
+  for (let i = 0; i < 6; i++) {
+    const c = buildLocalCard(db, f, from, to, i, f.depDate, requested, f.retDate);
+    if (f.trip === "round") c._startingPrice = true; // في سياق ذهاب/عودة: سعر يبدأ منه
+    cards.push(c);
+  }
+  return cards;
+}
+
+/* رحلات العودة التوضيحية — تُولَّد محلياً عند اختيار ذهاب توضيحي دون اتصال بالخادم */
+async function localFallbackReturns(card) {
+  const f = readFlightForm();
+  if (!card || card.gate !== "local" || !f || !f.retDate) return null;
+  const db = await loadFlightDB();
+  if (!db || !db.airports) return null;
+  const from = resolveAirport(f.fromRaw, db.airports);
+  const to = resolveAirport(f.toRaw, db.airports);
+  if (!from || !to || from.iata === to.iata) return null;
+  const requested = new Date(f.retDate + "T00:00:00");
+  const cards = [];
+  for (let i = 0; i < 6; i++) {
+    cards.push(buildLocalCard(db, f, to, from, i, f.retDate, requested, f.retDate));
+  }
+  cards.forEach((c) => { c._return = true; c._package = true; }); // الباقة كاملة (ذهاب وعودة)
+  roundState.selected = card;
+  roundState.returns = cards;
+  return cards;
+}
+
 async function searchFlights() {
   const f = readFlightForm();
   if (!f.fromRaw || !f.toRaw) { toast("⚠️ أدخل مدينتي المغادرة والوصول"); return null; }
@@ -1744,6 +1834,11 @@ async function searchFlights() {
         return { flights: out, real: true, source: "رحلات الذهاب — اختر ذهاباً لعرض رحلات العودة", roundStep: 1 };
       }
     } catch (e) { /* لا شيء */ }
+    const local = await localFallbackFlights(f);
+    if (local && local.length) {
+      roundState = { step: 1, outbounds: local, selected: null, returns: [] };
+      return { flights: local, real: false, source: "رحلات توضيحية محلية (دون اتصال بخادم الرحلات) — أسعار للعرض فقط", roundStep: 1 };
+    }
     return { flights: [], real: true, empty: true, roundStep: 1 };
   }
 
@@ -1751,6 +1846,10 @@ async function searchFlights() {
   const realDeals = await serpFlightsSearch(f);
   if (realDeals && realDeals.length) {
     return { flights: realDeals, real: true, source: "أسعار من Google Flights (SerpApi/Scrappa)" };
+  }
+  const local = await localFallbackFlights(f);
+  if (local && local.length) {
+    return { flights: local, real: false, source: "رحلات توضيحية محلية (دون اتصال بخادم الرحلات) — أسعار للعرض فقط" };
   }
   return { flights: [], real: true, empty: true };
 }
@@ -1837,6 +1936,28 @@ async function selectRoundOutbound(i) {
   const card = roundState.outbounds[i];
   if (!card || roundLoading) return;
   lastReturn = null; // اختيار ذهاب جديد يُلغي أي عودة سابقة — يجب إعادة اختيارها
+  if (card.gate === "local") {
+    // رحلات توضيحية محلية بلا خادم: توليد رحلات العودة محلياً أيضاً
+    roundLoading = true;
+    rtHeading(null);
+    $("flightsList").innerHTML = ""; // تظهر بطاقة مؤشر تحميل العودة وحدها (بلا blur)
+    setEmpty(false);
+    rtLoading(true, "تجهيز رحلات العودة التوضيحية…");
+    const cards = await localFallbackReturns(card);
+    roundLoading = false;
+    rtLoading(false);
+    if (!cards || !cards.length) {
+      toast("ℹ️ لا توجد رحلات عودة لهذا الذهاب — اختر رحلة أخرى");
+      renderFlights(roundState.outbounds);
+      showRoundHeading(1);
+      return;
+    }
+    roundState.step = 2;
+    renderFlights(cards);
+    showRoundHeading(2, card);
+    $("flight-results").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   if (!card._departureToken) { toast("ℹ️ هذه الرحلة لا تدعم جلب رحلات العودة — اختر أخرى"); return; }
   roundLoading = true;
   rtHeading(null);
@@ -2151,7 +2272,7 @@ function itinHTML(c) {
 
 /* بناء كرت الرحلة الواحد — مع خصائص اختيار الذهاب/العودة أو زر الحجز المبدئي */
 function cardHTML(c) {
-  const isOut = roundState.step === 1 && c && c._departureToken;
+  const isOut = roundState.step === 1 && c && (c._departureToken || c.gate === "local");
   const isRet = !!(c && c._return);
   const selectable = (isOut || isRet) ? " rt-selectable" : "";
   const data = isOut ? `data-outbound="${c._idx}"` : (isRet ? `data-return="${c._idx}"` : "");
