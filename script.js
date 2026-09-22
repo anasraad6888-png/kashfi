@@ -770,10 +770,11 @@ document.addEventListener("DOMContentLoaded", () => {
         + "\n/Producer (Winnovative HTML to PDF Converter 12.15)";
       let out = pdf.output();
       out = out.replace(/\/Producer \(jsPDF [^)]*\)/, info);
-      const b64 = btoa(unescape(encodeURIComponent(out)));
-      const bin = atob(b64);
-      const arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      /* ⚠️ لا تمرر out عبر encodeURIComponent/unescape — سلسلة ثنائية والبايتات ≥0x80
+         ستُتلف وتتحول لكل بايت بايتين (0xC3 0xBF…) فتصبح صورة الـ PDF تالفة والصفحة بيضاء.
+         نحول البايتات مباشرة حرفاً حرفاً كما هي. */
+      const arr = new Uint8Array(out.length);
+      for (let i = 0; i < out.length; i++) arr[i] = out.charCodeAt(i) & 0xff;
       const blob = new Blob([arr], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
