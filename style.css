@@ -1113,7 +1113,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   border: 1px solid #d8d8d8; border-radius: 4px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
-  padding: 15pt 17.6pt 16pt 32.6pt;
+  padding: 15pt 17.6pt 28.5pt 32.6pt;
   box-sizing: border-box; line-height: 1.2;
 }
 .tkt-sheet * { box-sizing: border-box; }
@@ -1192,7 +1192,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
   body.printing-ticket #ticket-template { display: block !important; border: none !important; box-shadow: none !important; background: #fff !important; padding: 0 !important; margin: 0 !important; }
   body.printing-ticket #ticket-template > :not(.tkt-scroll) { display: none !important; }
   body.printing-ticket .tkt-scroll { overflow: visible; padding: 0; }
-  body.printing-ticket .tkt-sheet { display: block; width: 595pt; min-width: 595pt; margin: 0; padding: 0 17.6pt 0 32.6pt; }
+  body.printing-ticket .tkt-sheet { display: block; width: 595pt; min-width: 595pt; margin: 0; padding: 15pt 17.6pt 28.5pt 32.6pt; }
 }
 
 /* شعار الخط — يسار الاسم دائماً (LTR) */

@@ -747,21 +747,21 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     /* محاكاة مرئية الطباعة: بلا حدود/ظلال، بهوامش الورقة، بارتفاع A4 تام 842pt */
     sheet.style.border = "none"; sheet.style.borderRadius = "0"; sheet.style.boxShadow = "none";
-    sheet.style.padding = "0 17.6pt 0 32.6pt"; sheet.style.width = "595pt"; sheet.style.minHeight = "842pt";
+    sheet.style.padding = "15pt 17.6pt 28.5pt 32.6pt"; sheet.style.width = "595pt"; sheet.style.minHeight = "0"; /* ارتفاع طبيعي، ثم يُرصّ داخل A4 بهوامش 15/28.5 */
     try {
       await new Promise((r) => setTimeout(r, 120)); /* فرصة لتطبيق العرض قبل الالتقاط */
       const canvas = await html2canvas(sheet, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("p", "mm", "a4");
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      /* الهوامش 15/28.5pt تأتي من padding الورقة نفسها داخل الصورة (علوي/سفلي + يسار/يمين).
+         يوضع الإطار على حافة الصفحة — وإذا تجاوز ارتفاعه A4 يُقلَّص عرضاً متناسباً ويُوسَّط. */
       const imgW = 210, imgH = (canvas.height * imgW) / canvas.width, pageH = 297;
-      let y = 0, first = true;
-      while (true) {
-        if (!first) pdf.addPage();
-        first = false;
-        pdf.addImage(imgData, "JPEG", 0, -y, imgW, imgH);
-        y += pageH;
-        if (y >= imgH - 1) break;
+      if (imgH <= pageH) {
+        pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
+      } else {
+        const s = pageH / imgH;
+        pdf.addImage(imgData, "JPEG", (imgW - imgW * s) / 2, 0, imgW * s, pageH);
       }
       /* ميتاداتا احترافية بدل التلقائية (jsPDF لا يكتب /Creator أصلاً → الإخفاء تام) */
       const info = "/Title (Travelport Viewtrip - My Trip)"
