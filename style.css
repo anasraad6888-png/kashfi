@@ -1100,6 +1100,13 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .pn-input { flex: none; width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; font-family: "Cairo"; font-size: .85rem; color: var(--text); background: #fff; }
 .pn-fld .pn-input { width: 100%; }
 .pn-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-light); }
+/* صف تاريخ ميلاد الرضيع (آخر 3 سنوات) */
+.pn-dob-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px dashed var(--border); border-radius: 11px; background: #fbfdfc; }
+.pn-dob-lbl { font-size: .72rem; font-weight: 800; color: var(--primary); font-family: "Cairo"; white-space: nowrap; }
+.pn-dob-hint { font-size: .62rem; font-weight: 600; color: var(--muted); font-family: "Cairo"; white-space: nowrap; }
+.pn-dob-row .pn-input { flex: 1; min-width: 0; cursor: pointer; }
+.pn-input.pn-dob { background: #fbfdfc; color: var(--text); }
+.pn-input.pn-dob::placeholder { color: var(--muted); }
 
 /* ═══════════ التذكرة — إعادة بناء حرفية من الـ PDF المرجعي ═══════════
    الوحدات pt مطابقة لملف التذكرة (A4: 595pt عرضاً)،

@@ -700,7 +700,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (box) {
       box.querySelectorAll("input").forEach((inp) => {
         const k = inp.dataset.paxKey, kind = inp.dataset.paxKind;
-        if (!k) return;
+        if (!k || kind === "dob") return; /* تاريخ الميلاد ليس اسماً */
         if (!map[k]) { map[k] = { first: "", family: "" }; order.push(k); }
         const v = (inp.value || "").trim();
         if (kind === "first") map[k].first = v; else map[k].family = v;
@@ -838,27 +838,48 @@ document.addEventListener("DOMContentLoaded", () => {
   $("calPrev").addEventListener("click", () => {
     cal.viewMonth--;
     if (cal.viewMonth < 0) { cal.viewMonth = 11; cal.viewYear--; }
+    if (cal.target === "dob") {
+      const now = new Date();
+      const minY = now.getFullYear() - 3, minM = now.getMonth();
+      if (cal.viewYear < minY || (cal.viewYear === minY && cal.viewMonth < minM)) { cal.viewYear = minY; cal.viewMonth = minM; }
+    }
     renderCalendar();
   });
   $("calNext").addEventListener("click", () => {
     cal.viewMonth++;
     if (cal.viewMonth > 11) { cal.viewMonth = 0; cal.viewYear++; }
+    if (cal.target === "dob") {
+      const now = new Date();
+      if (cal.viewYear > now.getFullYear() || (cal.viewYear === now.getFullYear() && cal.viewMonth > now.getMonth())) { cal.viewYear = now.getFullYear(); cal.viewMonth = now.getMonth(); }
+    }
     renderCalendar();
   });
   $("calClose").addEventListener("click", closeCalendar);
   $("calPopup").addEventListener("click", (e) => { if (e.target === $("calPopup")) closeCalendar(); });
-  // إغلاق التقويم عند النقر خارج النافذة (ما عدا حقلي التاريخ نفسيهما)
+  // فتح تقويم تاريخ ميلاد الرضيع عند النقر على خانته (التقويم نفسه يقتصر على آخر 3 سنوات)
+  $("paxNamesList").addEventListener("click", (e) => {
+    const inp = e.target.closest && e.target.closest(".pn-dob");
+    if (inp) openDobCalendar(inp.dataset.paxKey, inp);
+  });
+  // إغلاق التقويم عند النقر خارج النافذة (ما عدا حقلي التاريخ وخانات الميلاد)
   document.addEventListener("click", (e) => {
     const pop = $("calPopup");
     if (pop.hidden || !pop.classList.contains("open")) return;
     if (pop.contains(e.target)) return;
     if (e.target === $("depDate") || e.target === $("retDate")) return;
+    if (e.target.closest && e.target.closest(".pn-dob")) return;
     closeCalendar();
   });
   $("calDays").addEventListener("click", (e) => {
     const el = e.target.closest(".cal-day");
     if (!el || !el.dataset.iso || el.classList.contains("disabled") || el.classList.contains("muted")) return;
     const iso = el.dataset.iso;
+    if (cal.target === "dob") {
+      const dobInp = [...document.querySelectorAll(".pn-dob")].find((i) => i.dataset.paxKey === cal.dobKey);
+      if (dobInp) { dobInp.dataset.iso = iso; dobInp.value = formatArabicDate(iso); }
+      closeCalendar();
+      return;
+    }
     if (cal.target === "dep") {
       setDateField("depDate", iso);
       cal.dep = iso;
@@ -1065,7 +1086,7 @@ const TRIP_LABEL = { oneway: "ذهاب فقط", round: "ذهاب وعودة" };
 const ARABIC_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 const ARABIC_WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-const cal = { open: false, target: "dep", viewYear: 0, viewMonth: 0, dep: "", ret: "" };
+const cal = { open: false, target: "dep", viewYear: 0, viewMonth: 0, dep: "", ret: "", dobKey: null };
 
 function formatArabicDate(iso) {
   if (!iso) return "";
@@ -1126,19 +1147,22 @@ function buildPaxNameRows() {
   const box = $("paxNamesList");
   if (!box) return;
   const form = readFlightForm();
-  const old = new Map(); // key → { first, family }
+  const old = new Map(); // key → { first, family, dob }
   box.querySelectorAll("input").forEach((inp) => {
     const k = inp.dataset.paxKey;
     if (k) {
       const cur = old.get(k) || {};
-      cur[inp.dataset.paxKind] = inp.value.trim();
+      const kind = inp.dataset.paxKind;
+      if (kind === "dob") cur.dob = inp.dataset.iso || "";
+      else cur[kind] = inp.value.trim();
       old.set(k, cur);
     }
   });
   const rows = [];
   let i = 1;
-  const addRow = (type, key) => {
+  const addRow = (type, key, withDob) => {
     const saved = old.get(key) || {};
+    const dobIso = saved.dob || "";
     rows.push(`<div class="pn-row">
       <span class="pn-tag">${type} ${i}</span>
       <span class="pn-fld">
@@ -1149,12 +1173,17 @@ function buildPaxNameRows() {
         <label class="pn-lbl">اسم العائلة</label>
         <input type="text" class="pn-input" data-pax-key="${key}" data-pax-kind="family" placeholder="مثال: ALOBAIDI" value="${escapeHtml(saved.family || "")}" autocomplete="off">
       </span>
-    </div>`);
+    </div>${withDob ? `
+    <div class="pn-dob-row">
+      <span class="pn-dob-lbl">📅 تاريخ الميلاد</span>
+      <span class="pn-dob-hint">آخر 3 سنوات</span>
+      <input type="text" class="pn-input pn-dob" data-pax-key="${key}" data-pax-kind="dob" data-iso="${dobIso}" value="${escapeHtml(dobIso ? formatArabicDate(dobIso) : "")}" placeholder="اضغط لاختيار التاريخ" autocomplete="off" readonly>
+    </div>` : ""}`);
     i++;
   };
-  for (let a = 0; a < form.adults; a++) addRow("بالغ", `a${a}`);
-  for (let c = 0; c < form.children; c++) addRow("طفل", `c${c}`);
-  for (let inf = 0; inf < form.infants; inf++) addRow("رضيع", `i${inf}`);
+  for (let a = 0; a < form.adults; a++) addRow("بالغ", `a${a}`, false);
+  for (let c = 0; c < form.children; c++) addRow("طفل", `c${c}`, false);
+  for (let inf = 0; inf < form.infants; inf++) addRow("رضيع", `i${inf}`, true);
   box.innerHTML = rows.join("");
 }
 
@@ -1167,7 +1196,7 @@ function collectPaxNames() {
   if (box) {
     box.querySelectorAll("input").forEach((inp) => {
       const k = inp.dataset.paxKey, kind = inp.dataset.paxKind;
-      if (!k) return;
+      if (!k || kind === "dob") return; /* تاريخ الميلاد ليس اسماً */
       if (!map[k]) { map[k] = { first: "", family: "" }; order.push(k); }
       const v = (inp.value || "").trim();
       if (kind === "first") map[k].first = v; else map[k].family = v;
@@ -1180,6 +1209,7 @@ function collectPaxNames() {
     else nm = (first || family).trim().toUpperCase();
     if (!nm) return "";
     if (String(k).startsWith("c")) nm += " (Child)"; /* أطفال بوسم، كما فِي المرجع */
+    else if (String(k).startsWith("i")) nm += " (Infant)"; /* رضع بوسم (Infant) */
     return nm;
   }).filter(Boolean);
   if (!names.length) {
@@ -1473,6 +1503,7 @@ function ensureFlightDates() {
 /* ---------- منطق التقويم ---------- */
 function openCalendar(target) {
   cal.target = target;
+  cal.dobKey = null;
   cal.dep = getDateField("depDate");
   cal.ret = getDateField("retDate");
   const refIso = target === "dep" ? cal.dep : cal.ret;
@@ -1483,15 +1514,32 @@ function openCalendar(target) {
   const pop = $("calPopup");
   pop.hidden = false;
   pop.classList.add("open");
-  positionCalendar(pop, target);
+  positionCalendar(pop, $(target === "dep" ? "depDate" : "retDate"));
 }
-
+function paxDobInput(paxKey) {
+  return [...document.querySelectorAll(".pn-dob")].find((i) => i.dataset.paxKey === paxKey) || null;
+}
+function openDobCalendar(paxKey, inpEl) {
+  cal.target = "dob";
+  cal.dobKey = paxKey;
+  cal.dep = getDateField("depDate");
+  cal.ret = getDateField("retDate");
+  const inp = inpEl || paxDobInput(paxKey);
+  const cur = (inp && inp.dataset.iso) || "";
+  const ref = cur ? new Date(cur) : new Date();
+  cal.viewYear = ref.getFullYear();
+  cal.viewMonth = ref.getMonth();
+  renderCalendar();
+  const pop = $("calPopup");
+  pop.hidden = false;
+  pop.classList.add("open");
+  positionCalendar(pop, inp || $("depDate"));
+}
 /* تموضع التقويم: قائمة منسدلة أسفل حقل التاريخ مباشرة
    (وإن لم تتسع المساحة بالأسفل تُفتح للأعلى بدل التغطية على الشاشة) */
-function positionCalendar(pop, target) {
-  const input = $(target === "dep" ? "depDate" : "retDate");
-  if (!input || typeof input.getBoundingClientRect !== "function") return;
-  const rect = input.getBoundingClientRect();
+function positionCalendar(pop, anchor) {
+  if (!anchor || typeof anchor.getBoundingClientRect !== "function") return;
+  const rect = anchor.getBoundingClientRect();
   const vw = window.innerWidth || document.documentElement.clientWidth || 1024;
   const vh = window.innerHeight || document.documentElement.clientHeight || 768;
   const w = Math.min(348, Math.max(280, vw - 24));
@@ -1520,11 +1568,16 @@ function renderCalendar() {
   $("calTitle").textContent = `${ARABIC_MONTHS[m]} ${y}`;
   $("calLegend").textContent = cal.target === "ret"
     ? "اختر تاريخ العودة (بعد المغادرة)"
-    : "اختر تاريخ المغادرة";
+    : cal.target === "dob"
+      ? "اختر تاريخ الميلاد (آخر 3 سنوات)"
+      : "اختر تاريخ المغادرة";
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const offset = new Date(y, m, 1).getDay(); // الأحد = 0 (بداية الأسبوع)
   const now = new Date();
   const todayIso = toYmd(now);
+  /* نطاق تاريخ الميلاد: من اليوم وحتى 3 سنوات مضت فقط */
+  const dobMin = new Date(now.getFullYear() - 3, now.getMonth(), now.getDate());
+  const dobMinIso = toYmd(dobMin);
   let html = "";
   // أيام الشهر السابق (تعبئة معطلة)
   for (let i = offset - 1; i >= 0; i--) {
@@ -1536,11 +1589,14 @@ function renderCalendar() {
     const iso = toYmd(new Date(y, m, d));
     const past = iso < todayIso;
     let cls = "cal-day";
-    if (past) cls += " disabled";
-    if (!past && iso === todayIso) cls += " today";
-    if (iso === cal.dep) cls += " dep";
-    if (iso === cal.ret) cls += " ret";
-    if (cal.dep && cal.ret && iso > cal.dep && iso < cal.ret) cls += " inrange";
+    const dis = cal.target === "dob" ? (iso > todayIso || iso < dobMinIso) : past;
+    if (dis) cls += " disabled";
+    if (!dis && iso === todayIso) cls += " today";
+    if (cal.target !== "dob") {
+      if (iso === cal.dep) cls += " dep";
+      if (iso === cal.ret) cls += " ret";
+      if (cal.dep && cal.ret && iso > cal.dep && iso < cal.ret) cls += " inrange";
+    }
     html += `<span class="${cls}" data-iso="${iso}">${d}</span>`;
   }
   // أيام الشهر التالي (تعبئة معطلة)
