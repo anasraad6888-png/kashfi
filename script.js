@@ -747,25 +747,27 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     /* محاكاة مرئية الطباعة: بلا حدود/ظلال، بهوامش الورقة، بارتفاع A4 تام 842pt */
     sheet.style.border = "none"; sheet.style.borderRadius = "0"; sheet.style.boxShadow = "none";
-    sheet.style.padding = "15pt 17.6pt 28.5pt 32.6pt"; sheet.style.width = "595pt"; sheet.style.minHeight = "0"; /* ارتفاع طبيعي، ثم يُرصّ داخل A4 بهوامش 15/28.5 */
+    sheet.style.padding = "0 17.6pt 0 32.6pt"; sheet.style.width = "595pt"; sheet.style.minHeight = "0"; /* الهوامش العلوية/السفلية تُضاف لكل صفحة في الترحيل */
     try {
       await new Promise((r) => setTimeout(r, 120)); /* فرصة لتطبيق العرض قبل الالتقاط */
       const canvas = await html2canvas(sheet, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("p", "mm", "a4");
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
-      /* التذكرة كاملة بمقياس 1:1 (نص أصلي غير مصغّر) والهوامش من padding الورقة نفسها
-         (علوي 15 / سفلي 28.5 / يسار 32.6 / يمين 17.6pt كالمرجع تماماً).
-         يناسب الارتفاع → صفحة واحدة؛ وإلا تُرحَّل تلقائياً على صفحات A4 (قصّ نظيف
-         لكل صفحة بمقدار 297mm) مع بقاء الهوامش الجانبية ثابتة في كل صفحة. */
-      const imgW = 210, imgH = (canvas.height * imgW) / canvas.width, pageH = 297;
-      let y = 0, first = true;
-      while (true) {
-        if (!first) pdf.addPage();
-        first = false;
-        pdf.addImage(imgData, "JPEG", 0, -y, imgW, imgH);
-        y += pageH;
-        if (y >= imgH - 1) break;
+      /* ترحيل نظيف بهوامش كاملة في كل صفحة: كل صفحة A4 تعرض مقدار 798.5pt من
+         التذكرة داخل هوامش — علوي 15pt وسفلي 28.5pt (مستطيلات بيضاء تغطي
+         أطراف الصورة الممتدة) وجانبين 32.6/17.6pt من padding الورقة. */
+      const imgW = 210, imgH = (canvas.height * imgW) / canvas.width;
+      const pageH = 297, mTop = 15 * (210 / 595), mBot = 28.5 * (210 / 595);
+      const contentH = pageH - mTop - mBot; /* ≈ 281.65mm ≈ 798.5pt لكل صفحة */
+      let k = 0;
+      while (k * contentH < imgH - 1) {
+        if (k > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, mTop - k * contentH, imgW, imgH);
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, imgW, mTop, "F");            /* هامش علوي أبيض */
+        pdf.rect(0, pageH - mBot, imgW, mBot, "F"); /* هامش سفلي أبيض */
+        k++;
       }
       /* ميتاداتا احترافية بدل التلقائية (jsPDF لا يكتب /Creator أصلاً → الإخفاء تام) */
       const info = "/Title (Travelport Viewtrip - My Trip)"
