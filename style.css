@@ -35,6 +35,32 @@
   font-style: normal;
 }
 
+/* ═══ Open Sans — خط التذكرة: Light 300 / Regular 400 / Bold 700 (محلي) ═══ */
+@font-face {
+  font-family: 'Open Sans';
+  src: local('Open Sans'), local('OpenSans'), local('Open Sans Regular'),
+       url('assets/fonts/OpenSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Open Sans';
+  src: local('Open Sans Bold'), local('OpenSans-Bold'),
+       url('assets/fonts/OpenSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Open Sans';
+  src: local('Open Sans Light'), local('OpenSans-Light'),
+       url('assets/fonts/OpenSans-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* خط الكشف: IBM Plex Sans Arabic (محلي — Regular للنصوص العادية والتذييل، Medium للصفوف الصفراء والإجماليات) */
 @font-face {
   font-family: "IBM Plex Sans Arabic";
@@ -1117,7 +1143,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
   direction: ltr; text-align: left;
   display: inline-block; width: 595pt; min-width: 595pt;
   background: #ffffff; color: #000000;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   border: 1px solid #d8d8d8; border-radius: 4px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
   padding: 15pt 17.6pt 28.5pt 32.6pt;
@@ -1169,7 +1195,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .tk-sec .pv-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 2.5pt; color: #000; font-size: 6.8pt; }
 /* حدود سوداء أحادية الجانب (يمين+أسفل) مثل المرجع — كل حافة تُرسم مرة واحدة فقط
    فتتساوى السمكة في كل الخطوط (الخارجية والداخلية ~0.7pt أسود) */
-.pv-table th, .pv-table td { font-size: 6.8pt; color: #000; padding: 1.5pt 4pt; text-align: left; font-family: "Arial", Helvetica, sans-serif; border-right: 0.7pt solid #000; border-bottom: 0.7pt solid #000; vertical-align: top; }
+.pv-table th, .pv-table td { font-size: 6.8pt; color: #000; padding: 1.5pt 4pt; text-align: left; font-family: 'Open Sans', Arial, sans-serif; border-right: 0.7pt solid #000; border-bottom: 0.7pt solid #000; vertical-align: top; }
 .pv-table th { font-weight: 700; background: #fff; border-top: 0.7pt solid #000; }
 .pv-table th:first-child, .pv-table td:first-child { border-left: 0.7pt solid #000; }
 .pv-table .pv-n { white-space: nowrap; }
