@@ -1158,7 +1158,8 @@ function buildPaxNameRows() {
   box.innerHTML = rows.join("");
 }
 
-/* جمع الأسماء بالصيغة المرجعية: العائلة، الاسم — ALOBAIDI, YAQEEN */
+/* جمع الأسماء بالصيغة المرجعية: كل مسافر بسطر مستقل — ALOBAIDI, YAQEEN
+   والطفل بوسم (Child)؛ الرضيع بلا وسم الآن (تنسيقه الخاص لاحقاً) */
 function collectPaxNames() {
   const box = $("paxNamesList");
   const map = {};
@@ -1174,9 +1175,12 @@ function collectPaxNames() {
   }
   const names = order.map((k) => {
     const first = map[k].first, family = map[k].family;
-    if (first && family) return `${family.toUpperCase()}, ${first.toUpperCase()}`;
-    const any = (first || family).trim();
-    return any ? any.toUpperCase() : "";
+    let nm = "";
+    if (first && family) nm = `${family.toUpperCase()}, ${first.toUpperCase()}`;
+    else nm = (first || family).trim().toUpperCase();
+    if (!nm) return "";
+    if (String(k).startsWith("c")) nm += " (Child)"; /* أطفال بوسم، كما فِي المرجع */
+    return nm;
   }).filter(Boolean);
   if (!names.length) {
     const form = readFlightForm();
@@ -1379,7 +1383,7 @@ function genTicket() {
   const res = tktCode();
   $("tk-res").textContent = res;
   const pax = collectPaxNames();
-  const paxList = pax.join(", ");
+  const paxList = pax.join("\n"); /* كل مسافر في سطر مستقل */
   const clsEng = f ? (ENG_CLASS[f.cls] || f.cls) : "Economy";
   /* دمج مقاطع رحلة الذهاب ثم رحلة العودة معاً، مثل النموذج المرجعي (أربع كتل) */
   const segs = [];
