@@ -1176,6 +1176,8 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .pv-table .pv-sub-txt { color: #000; }
 /* أيقونة الرضيع U+E602 من التذاكر المرجعية (مربع أسود ببكتوجرام أبيض) */
 .pv-table .ic-inf { width: 8.8pt; height: 8.8pt; vertical-align: middle; }
+/* الصف الضيق الفارغ تحت كل سطر اسم مسافر عدا سطر البالغ الحامل للرضيع (كما في المرجع) */
+.pv-table .pv-gap td { height: 2.6pt; padding: 0 4pt; }
 .tk-sec .sl { font-size: 6.8pt; color: #000; margin-top: 6pt; }
 .ap { margin-top: 3pt; }
 .ap p { font-size: 6.8pt; color: #000; margin: 0; line-height: 1.35; }

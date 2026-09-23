@@ -1287,7 +1287,9 @@ function paxTableHTML(pax) {
       rows.push(`<tr><td class="pv-n"><b>${escapeHtml(p.name)}</b></td><td class="pv-s"><img class="ic-inf" src="assets/tk/infant.png" alt="" draggable="false"></td></tr>
       <tr><td class="pv-sub" colspan="2"><img class="ic-inf" src="assets/tk/infant.png" alt="" draggable="false"> <span class="pv-sub-lbl">Infant</span><br><span class="pv-sub-txt">${escapeHtml(capFirst(carrier.family))}/${escapeHtml(String(carrier.first || "").toLowerCase())} ${escapeHtml(dobDdmmyy(carrier.dob) || "——")}</span></td></tr>`);
     } else {
-      rows.push(`<tr><td class="pv-n"><b>${escapeHtml(p.name)}</b>${paxTag(p)}</td><td class="pv-s"></td></tr>`);
+      /* كما في المرجع: كل سطر اسم (عدا الحامل للرضيع) يليه صف ضيق فارغ */
+      rows.push(`<tr><td class="pv-n"><b>${escapeHtml(p.name)}</b>${paxTag(p)}</td><td class="pv-s"></td></tr>
+      <tr class="pv-gap"><td colspan="2"></td></tr>`);
     }
   });
   return `<table class="pv-table"><thead><tr><th>Name</th><th>Special Services</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
