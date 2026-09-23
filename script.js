@@ -758,10 +758,32 @@ document.addEventListener("DOMContentLoaded", () => {
          يوضع الإطار على حافة الصفحة — وإذا تجاوز ارتفاعه A4 يُقلَّص عرضاً متناسباً ويُوسَّط. */
       const imgW = 210, imgH = (canvas.height * imgW) / canvas.width, pageH = 297;
       if (imgH <= pageH) {
+        /* يناسب A4: يوضع بمقياس 1:1 فتكون الهوامش هي padding الورقة نفسها (15/28.5/32.6/17.6pt) */
         pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
       } else {
-        const s = pageH / imgH;
-        pdf.addImage(imgData, "JPEG", (imgW - imgW * s) / 2, 0, imgW * s, pageH);
+        /* تذكرة أطول من A4: تقليص بلا انتفاخ الهوامش الجانبية —
+           نعيد الالتقاط بهوامش داخلية معوَّضة بحيث تبقى هوامش الصفحة بعد التقليص
+           مطابقة للمرجع تماماً (علوي 15 / سفلي 28.5 / يسار 32.6 / يمين 17.6pt)
+           مع عرض محتوى مساوٍ للمرجع (544.8pt). */
+        const sheetPtH = canvas.height / 2 / (96 / 72); /* ارتفاع الورقة الحقيقي بالنقط (التقاط scale:2) */
+        const H0 = sheetPtH - (15 + 28.5);              /* ارتفاع المحتوى دون الهوامش */
+        const F = (842 - 15 - 28.5) / H0;               /* عامل التقليص لمحتوى بارتفاع 798.17pt */
+        const pagePtW = 595.28;
+        const extra = (pagePtW * (1 - F)) / 2;          /* فراغ التوسيط لكل جانب (pt) */
+        let padL = (32.6 - extra), padR = (17.6 - extra);   /* الهدف النهائي للساند بعد التقليص */
+        let placeX = extra;                             /* pt — توسيط */
+        if (padL < 0.5 || padR < 0.5) {
+          /* تذاكر أطول من اللازم (تجاوز ~12%): توسيط متناظر بأصغر هوامش ممكنة بدل انحياز أيسر */
+          padL = Math.max(0.5, padL); padR = Math.max(0.5, padR);
+        }
+        const P = (v) => (v / F).toFixed(2) + "pt";
+        const prevPad = sheet.style.padding;
+        sheet.style.padding = P(15) + " " + P(padR) + " " + P(28.5) + " " + P(padL); /* أعلى يمين أسفل يسار */
+        await new Promise((r) => setTimeout(r, 120));
+        const canvas2 = await html2canvas(sheet, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+        sheet.style.padding = prevPad;
+        const xMm = placeX * (210 / 595.28);
+        pdf.addImage(canvas2.toDataURL("image/jpeg", 0.95), "JPEG", xMm, 0, imgW * F, pageH);
       }
       /* ميتاداتا احترافية بدل التلقائية (jsPDF لا يكتب /Creator أصلاً → الإخفاء تام) */
       const info = "/Title (Travelport Viewtrip - My Trip)"
