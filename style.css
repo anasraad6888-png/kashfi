@@ -1165,6 +1165,15 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .tk-sec { margin-top: 5pt; }
 .tk-sec .h { display: block; font-size: 6.8pt; font-weight: 700; color: #000; }
 .tk-sec .pv { font-size: 6.8pt; color: #000; margin-top: 2.5pt; white-space: pre-line; line-height: 1.45; }
+/* جدول PASSENGERS عند وجود رضع — عمودان Name | Special Services (بنمط المرجع) */
+.tk-sec .pv-table { width: 100%; border-collapse: collapse; margin-top: 2.5pt; color: #000; font-size: 6.8pt; }
+.pv-table th { font-size: 6.8pt; font-weight: 700; color: #000; padding: 1.5pt 4pt; text-align: left; font-family: "Arial", Helvetica, sans-serif; border: 0.6pt solid #969696; background: #fff; }
+.pv-table td { font-size: 6.8pt; color: #000; padding: 1.5pt 4pt; text-align: left; font-family: "Arial", Helvetica, sans-serif; border: 0.6pt solid #969696; vertical-align: top; }
+.pv-table .pv-n { white-space: nowrap; }
+.pv-table .pv-s { width: 42%; }
+.pv-table .pv-sub { font-size: 6.6pt; color: #000; padding: 0.5pt 4pt 2.5pt 7pt; }
+.pv-table .pv-sub-lbl { font-weight: 700; }
+.pv-table .pv-sub-txt { color: #000; }
 .tk-sec .sl { font-size: 6.8pt; color: #000; margin-top: 6pt; }
 .ap { margin-top: 3pt; }
 .ap p { font-size: 6.8pt; color: #000; margin: 0; line-height: 1.35; }

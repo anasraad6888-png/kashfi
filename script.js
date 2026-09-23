@@ -684,8 +684,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("flightFrom").addEventListener("input", refreshTripSummary);
   $("flightTo").addEventListener("input", refreshTripSummary);
-  ["adults", "children", "infants"].forEach((id) =>
-    $(id).addEventListener("change", refreshTripSummary));
+  ["adults", "children", "infants"].forEach((id) => {
+    $(id).addEventListener("change", () => {
+      /* كل بالغ يحمل رضيعاً واحداً كحد أقصى (لأن الرضيع يجلس في حضنه) */
+      const a = paxVal("adults"), i = paxVal("infants");
+      if (i > a) {
+        $("infants").value = a;
+        toast(`⚠️ لا يمكن أن يزيد الرضع على البالغين — كل بالغ يحمل رضيعاً واحداً كحد أقصى (${a})`);
+      }
+      if (typeof buildPaxNameRows === "function") buildPaxNameRows();
+      refreshTripSummary();
+    });
+    $(id).addEventListener("input", refreshTripSummary);
+  });
   $("genTicketBtn").addEventListener("click", () => {
     genTicket();
     $("ticket-template").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1183,7 +1194,8 @@ function buildPaxNameRows() {
   };
   for (let a = 0; a < form.adults; a++) addRow("بالغ", `a${a}`, false);
   for (let c = 0; c < form.children; c++) addRow("طفل", `c${c}`, false);
-  for (let inf = 0; inf < form.infants; inf++) addRow("رضيع", `i${inf}`, true);
+  const infCount = Math.min(form.infants, form.adults); /* كل بالغ يحمل رضيعاً واحداً */
+  for (let inf = 0; inf < infCount; inf++) addRow("رضيع", `i${inf}`, true);
   box.innerHTML = rows.join("");
 }
 
@@ -1218,6 +1230,67 @@ function collectPaxNames() {
     for (let k = 0; k < n; k++) names.push(`PASSENGER ${k + 1}`);
   }
   return names;
+}
+
+/* ===== جدول PASSENGERS عند وجود رضع (كما في التذاكر المرجعية) ===== */
+function collectPaxInfo() {
+  const box = $("paxNamesList");
+  const map = {};
+  const order = [];
+  if (box) {
+    box.querySelectorAll("input").forEach((inp) => {
+      const k = inp.dataset.paxKey, kind = inp.dataset.paxKind;
+      if (!k) return;
+      if (!map[k]) { map[k] = { first: "", family: "", dob: "" }; order.push(k); }
+      const v = (inp.value || "").trim();
+      if (kind === "first") map[k].first = v;
+      else if (kind === "family") map[k].family = v;
+      else if (kind === "dob") map[k].dob = inp.dataset.iso || "";
+    });
+  }
+  const K = (k) => String(k || "").slice(0, 1);
+  return order.map((k) => {
+    const p = map[k];
+    const first = p.first, family = p.family;
+    const name = (first && family)
+      ? `${family.toUpperCase()}, ${first.toUpperCase()}`
+      : (first || family).trim().toUpperCase();
+    return { key: k, kind: K(k) === "c" ? "child" : K(k) === "i" ? "infant" : "adult", name, first, family, dob: p.dob };
+  }).filter((p) => p.name);
+}
+/* تاريخ الميلاد بصيغة المرجع: 18oct25 (يوم + شهر إنكليزي صغير + سنتان) */
+const TKT_MON3 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function dobDdmmyy(iso) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return "";
+  const mon = TKT_MON3[+m[2] - 1] || "";
+  return `${m[3]}${mon}${m[1].slice(2)}`;
+}
+/* العائلة بحرف كبير وباقي صغير: AHMED → Ahmed (كما في المرجع Ahmed/kja) */
+function capFirst(s) {
+  s = String(s || "");
+  return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+}
+/* بناء جدول العمودين (Name | Special Services):
+   الرضيع تحته سطر مسنن باسمه وتاريخ ميلاده تحت البالغ الحامل (كل رضيع لبالغٍ مختلف)
+   ويُعاد ذكر الرضيع أيضاً كصف في قائمة المسافرين بوسم (Infant) */
+function paxTableHTML(pax) {
+  const adults = pax.filter((p) => p.kind === "adult");
+  const infants = pax.filter((p) => p.kind === "infant");
+  const nInf = Math.min(infants.length, adults.length);
+  const paxTag = (p) => p.kind === "child" ? " (Child)" : p.kind === "infant" ? " (Infant)" : "";
+  const rows = [];
+  pax.forEach((p) => {
+    const ai = adults.indexOf(p);
+    const carrier = (p.kind === "adult" && ai >= 0 && ai < nInf) ? infants[ai] : null;
+    if (carrier) {
+      rows.push(`<tr><td class="pv-n"><b>${escapeHtml(p.name)}</b></td><td class="pv-s">👶</td></tr>
+      <tr><td class="pv-sub" colspan="2"><span class="pv-sub-lbl">👶 Infant</span><br><span class="pv-sub-txt">${escapeHtml(capFirst(carrier.family))}/${escapeHtml(String(carrier.first || "").toLowerCase())} ${escapeHtml(dobDdmmyy(carrier.dob) || "——")}</span></td></tr>`);
+    } else {
+      rows.push(`<tr><td class="pv-n"><b>${escapeHtml(p.name)}</b>${paxTag(p)}</td><td class="pv-s"></td></tr>`);
+    }
+  });
+  return `<table class="pv-table"><thead><tr><th>Name</th><th>Special Services</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
 }
 
 /* ===== أدوات تنسيق (بنفس اصطلاح الـ PDF) ===== */
@@ -1378,7 +1451,7 @@ function tktLegHTML(l, conf, paxList, clsEng, airline, code, flightNo, dateStr) 
     <div class="tk-conf">Confirmation Number: <b>${escapeHtml(conf)}</b></div>
     <div class="tk-sec">
       <span class="h">PASSENGERS</span>
-      <div class="pv">${escapeHtml(paxList)}</div>
+      <div class="pv">${paxList}</div>
       <div class="sl">Class Of Service: ${escapeHtml(clsEng)}</div>
     </div>
     <div class="tk-sec">
@@ -1412,8 +1485,19 @@ function genTicket() {
   const conf = tktCode();
   const res = tktCode();
   $("tk-res").textContent = res;
-  const pax = collectPaxNames();
-  const paxList = pax.join("\n"); /* كل مسافر في سطر مستقل */
+  const paxInfo = collectPaxInfo();
+  const hasInfant = paxInfo.some((p) => p.kind === "infant");
+  const adultsN = paxInfo.filter((p) => p.kind === "adult").length;
+  const infantsN = paxInfo.filter((p) => p.kind === "infant").length;
+  let paxList;
+  if (hasInfant) {
+    if (infantsN > adultsN) toast(`⚠️ الرضع (${infantsN}) أكثر من البالغين (${adultsN}) — كل بالغ يحمل رضيعاً واحداً`);
+    const missDob = paxInfo.filter((p) => p.kind === "infant" && !p.dob);
+    if (missDob.length) toast(`⚠️ أضف تاريخ ميلاد ${missDob.length === 1 ? "الرضيع" : "الرضع"} ليظهر تحت البالغ الحامل`);
+    paxList = paxTableHTML(paxInfo); /* جدول العمودين عند وجود رضيع، كما فِي المرجع */
+  } else {
+    paxList = escapeHtml(paxInfo.map((p) => p.name + (p.kind === "child" ? " (Child)" : "")).join("\n")); /* كل مسافر بسطر مستقل */
+  }
   const clsEng = f ? (ENG_CLASS[f.cls] || f.cls) : "Economy";
   /* دمج مقاطع رحلة الذهاب ثم رحلة العودة معاً، مثل النموذج المرجعي (أربع كتل) */
   const segs = [];
