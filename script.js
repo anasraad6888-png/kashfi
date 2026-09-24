@@ -725,7 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }).filter(Boolean);
     return "تكت " + (names.length ? names.join("، ") : "طيران");
   };
-  $("printTicketBtn").addEventListener("click", () => {
+  $("printTicketBtn")?.addEventListener("click", () => {
     document.body.classList.add("printing-ticket");
     const oldTitle = document.title;
     document.title = ticketPrintTitle();
