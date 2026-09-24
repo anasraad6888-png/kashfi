@@ -1438,7 +1438,7 @@ function tktLegHTML(l, conf, paxList, clsEng, airline, code, flightNo, dateStr) 
         <img class="ic-arrow" src="assets/tk/arrow.png" alt="" draggable="false">
         <div class="tc tc-dep">
           <span class="sup">DEPART</span>
-          <span class="row2"><b>${dDep.hm}</b><span class="sub"><i>${dDep.ap}</i><i>${escapeHtml(dep)}</i></span></span>
+          <span class="row2"><span class="r2n">${dDep.hm}</span><span class="sub"><i>${dDep.ap}</i><i>${escapeHtml(dep)}</i></span></span>
         </div>
         <div class="tm">
           <span class="ns1">NON</span><span class="ns2">STOP</span>
@@ -1447,7 +1447,7 @@ function tktLegHTML(l, conf, paxList, clsEng, airline, code, flightNo, dateStr) 
         </div>
         <div class="tc tc-arr">
           <span class="sup">ARRIVE</span>
-          <span class="row2"><b>${dArr.hm}</b><span class="sub"><i>${dArr.ap}</i><i>${escapeHtml(arr)}</i></span></span>
+          <span class="row2"><span class="r2n">${dArr.hm}</span><span class="sub"><i>${dArr.ap}</i><i>${escapeHtml(arr)}</i></span></span>
         </div>
       </div>
     </div>
