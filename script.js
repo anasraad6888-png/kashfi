@@ -2428,7 +2428,6 @@ function itinHTML(c) {
 function cardHTML(c) {
   const isOut = roundState.step === 1 && c && (c._departureToken || c.gate === "local");
   const isRet = !!(c && c._return);
-  const selectable = (isOut || isRet) ? " rt-selectable" : "";
   const data = isOut ? `data-outbound="${c._idx}"` : (isRet ? `data-return="${c._idx}"` : "");
   const gateLbl = c.gate === "scrappa" ? "Scrappa" : "Google Flights";
   const dur = String(c.duration || "").trim() || "—";
@@ -2446,6 +2445,8 @@ function cardHTML(c) {
   const btn = (isOut || isRet)
     ? ""
     : `<button type="button" class="btn btn-primary" data-book="${c._idx}">🎟️ اختر الرحلة</button>`;
+  /* الكرت نفسه قابل للنقر (مؤشر يد + تأثير) سواء لاختيار ذهاب/عودة أو لاختيار رحلة الذهاب المفرد */
+  const selectable = (isOut || isRet || btn) ? " rt-selectable" : "";
   return `<div class="flight-card${selectable}" ${data}>
   <div class="fc-head">
     <span class="fc-airline">${airlineLogo(c.code, c.airline)} ${escapeHtml(c.airline)}</span>
@@ -2516,5 +2517,15 @@ function renderCards(flights) {
   shown.forEach((c) => {
     const b = list.querySelector(`button[data-book="${c._idx}"]`);
     if (b) b.addEventListener("click", () => confirmBooking(c));
+    /* كروت الذهاب فقط: الضغط على أي موضع من الكرت (عدا الأزرار الداخلية) يختار
+       الرحلة مباشرة — تماماً كسلوك كروت ذهاب/عودة */
+    const isRoundPick = c._return || (roundState.step === 1 && (c._departureToken || c.gate === "local"));
+    if (!isRoundPick) {
+      const cardEl = b ? b.closest(".flight-card") : null;
+      if (cardEl) cardEl.addEventListener("click", (ev) => {
+        if (ev.target.closest && ev.target.closest("button")) return; // أزرار داخلية لا تختار
+        confirmBooking(c);
+      });
+    }
   });
 }
