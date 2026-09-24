@@ -1220,7 +1220,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .tk-help { font-size: 9.1pt; font-weight: 700; color: #000; }
 .tk-frule { height: 0.57pt; background: #000; margin: 3.5pt 0 2.5pt; }
 .tk-res { font-size: 9.1pt; font-weight: 400; color: #000; }
-.tk-res b { letter-spacing: 1pt; }
+.tk-res #tk-res, .tk-res b { font-weight: 400; letter-spacing: 1pt; }
 .tk-agency { margin-top: 8pt; }
 .tk-agency p { font-size: 6.8pt; color: #000; margin: 0; line-height: 1.5; }
 .tk-agency .ab { font-weight: 700; }
