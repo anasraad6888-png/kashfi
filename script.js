@@ -1451,7 +1451,7 @@ function tktLegHTML(l, conf, paxList, clsEng, airline, code, flightNo, dateStr) 
         </div>
       </div>
     </div>
-    <div class="tk-conf">Confirmation Number: <b>${escapeHtml(conf)}</b></div>
+    <div class="tk-conf">Confirmation Number: <span class="tk-conf-code">${escapeHtml(conf)}</span></div>
     <div class="tk-sec">
       <span class="h">PASSENGERS</span>
       <div class="pv">${paxList}</div>

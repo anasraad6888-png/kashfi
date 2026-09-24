@@ -1185,7 +1185,7 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .tm .ic-mid { position: absolute; left: 0.4pt; top: 15.1pt; width: 18.1pt; height: auto; }
 .tm .dur { position: absolute; top: 27.6pt; left: 0; right: 0; text-align: center; font-size: 6.2pt; font-style: normal; color: #000; white-space: nowrap; }
 .tk-conf { font-size: 6.8pt; color: #000; white-space: nowrap; margin-top: 9pt; }
-.tk-conf b { font-weight: 400; letter-spacing: .5pt; }
+.tk-conf .tk-conf-code { font-weight: 400; letter-spacing: .5pt; }
 
 /* الأجزاء النصية داخل الجسم */
 .tk-sec { margin-top: 5pt; }
