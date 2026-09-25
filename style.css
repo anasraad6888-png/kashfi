@@ -1275,3 +1275,53 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 #searchFlightsBtn.busy { opacity: .62; cursor: progress; pointer-events: none; }
 #flight-results { position: relative; }
 #srchLoading b { font-size: 1.15rem; }
+
+/* ═══════════ تبويب الحجز الفندقي ═══════════ */
+#searchHotelsBtn.busy { opacity: .62; cursor: progress; pointer-events: none; }
+.hotel-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.hc-name { font-weight: 900; color: var(--primary-dark); font-size: 1.05rem; }
+.hc-stars { color: #f5a623; letter-spacing: 2px; font-size: .9rem; }
+.hc-rating { background: var(--primary); color: #fff; border-radius: 8px; padding: 3px 10px; font-weight: 800; font-size: .8rem; }
+.hc-meta { font-size: .82rem; color: var(--muted); font-weight: 700; }
+.hc-amen { display: flex; flex-wrap: wrap; gap: 6px; }
+.hc-amen span { background: var(--primary-light); color: var(--primary-dark); border-radius: 20px; padding: 3px 10px; font-size: .74rem; font-weight: 700; }
+.hc-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+.hc-price { font-family: "Cairo"; font-weight: 800; color: var(--primary-dark); font-size: 1.05rem; }
+.hc-price small { color: var(--muted); font-weight: 700; font-size: .75rem; }
+
+/* ورقة إثبات الحجز الفندقي (A4) */
+.htl-sheet {
+  width: 595pt; min-height: 842pt; margin: 0 auto;
+  background: #fff; color: #000;
+  font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 4px 24px rgba(15, 92, 78, .18); border: 1px solid var(--border); border-radius: 4px;
+  display: flex; flex-direction: column;
+}
+.htl-band {
+  background: #0b5d46; color: #fff; padding: 18pt 22pt;
+  display: flex; justify-content: space-between; align-items: center; gap: 10pt; flex-wrap: wrap;
+}
+.htl-brand b { font-size: 15pt; letter-spacing: .3pt; }
+.htl-tag { font-size: 8.5pt; font-weight: 700; letter-spacing: 1.5pt; background: rgba(255,255,255,.16); border-radius: 4pt; padding: 4pt 9pt; }
+.htl-body { padding: 22pt 26pt; flex: 1; display: flex; flex-direction: column; gap: 16pt; }
+.htl-booked { font-size: 14pt; font-weight: 800; letter-spacing: .4pt; margin: 0; }
+.htl-booked span { color: #0b5d46; font-weight: 800; }
+.htl-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10pt; }
+.htl-cell { border: 1.1pt solid #cfd8d4; border-radius: 6pt; padding: 8pt 10pt; display: flex; flex-direction: column; gap: 3pt; background: #fbfdfc; }
+.htl-cell span { font-size: 6.6pt; letter-spacing: 1.2pt; color: #5c6b66; font-weight: 700; text-transform: uppercase; }
+.htl-cell b { font-size: 10.5pt; color: #10231c; font-weight: 800; word-break: break-word; }
+.htl-note { margin-top: auto; font-size: 7.5pt; color: #5c6b66; border-top: 1pt solid #cfd8d4; padding-top: 8pt; }
+@media print {
+  .htl-sheet { box-shadow: none; border: none; }
+}

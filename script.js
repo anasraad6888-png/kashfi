@@ -861,6 +861,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!getDateField("depDate")) { toast("⚠️ اختر تاريخ المغادرة أولاً"); openCalendar("dep"); return; }
     openCalendar("ret");
   });
+  /* حقلا الحجز الفندقي: الوصول (hIn) والمغادرة (hOut) */
+  $("hotelIn").addEventListener("click", () => openCalendar("hIn"));
+  $("hotelIn").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); openCalendar("hIn"); }
+  });
+  $("hotelOut").addEventListener("click", () => {
+    if (!getDateField("hotelIn")) { toast("⚠️ اختر تاريخ الوصول أولاً"); openCalendar("hIn"); return; }
+    openCalendar("hOut");
+  });
+  $("hotelOut").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (!getDateField("hotelIn")) { toast("⚠️ اختر تاريخ الوصول أولاً"); openCalendar("hIn"); return; }
+    openCalendar("hOut");
+  });
   $("calPrev").addEventListener("click", () => {
     cal.viewMonth--;
     if (cal.viewMonth < 0) { cal.viewMonth = 11; cal.viewYear--; }
@@ -893,6 +908,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pop.hidden || !pop.classList.contains("open")) return;
     if (pop.contains(e.target)) return;
     if (e.target === $("depDate") || e.target === $("retDate")) return;
+    if (e.target === $("hotelIn") || e.target === $("hotelOut")) return;
     if (e.target.closest && e.target.closest(".pn-dob")) return;
     closeCalendar();
   });
@@ -904,6 +920,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const dobInp = [...document.querySelectorAll(".pn-dob")].find((i) => i.dataset.paxKey === cal.dobKey);
       if (dobInp) { dobInp.dataset.iso = iso; dobInp.value = formatArabicDate(iso); }
       closeCalendar();
+      return;
+    }
+    if (cal.target === "hIn" || cal.target === "hOut") {
+      if (cal.target === "hIn") {
+        setDateField("hotelIn", iso);
+        cal.dep = iso;
+        if (cal.ret && cal.ret <= iso) { cal.ret = ""; setDateField("hotelOut", ""); }
+        closeCalendar();
+        autoHotelOut();
+      } else {
+        if (cal.dep && iso <= cal.dep) { toast("⚠️ تاريخ المغادرة يجب أن يكون بعد تاريخ الوصول"); return; }
+        setDateField("hotelOut", iso);
+        cal.ret = iso;
+        closeCalendar();
+      }
       return;
     }
     if (cal.target === "dep") {
@@ -929,7 +960,7 @@ document.addEventListener("DOMContentLoaded", () => {
    اقتراح المطارات — بحث فوري في كل مطارات العالم
    (بالاسم، المدينة، رمز IATA أو رمز ICAO)
    ========================================================= */
-const sugEsc = (s) => String(s || "").replace(/[&<>"']/g,
+const sugEsc = (s) => String(s ?? "").replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let airSuggestDB = null;
@@ -1606,6 +1637,21 @@ function ensureFlightDates() {
 function openCalendar(target) {
   cal.target = target;
   cal.dobKey = null;
+  /* حقلا الحجز الفندقي — يقرآن من حقول الفندق ويعيدان تموضع التقويم عليهما */
+  if (target === "hIn" || target === "hOut") {
+    cal.dep = getDateField("hotelIn");
+    cal.ret = getDateField("hotelOut");
+    const cur = target === "hIn" ? cal.dep : cal.ret;
+    const ref = cur ? new Date(cur) : (cal.dep ? new Date(cal.dep) : new Date());
+    cal.viewYear = ref.getFullYear();
+    cal.viewMonth = ref.getMonth();
+    renderCalendar();
+    const pop = $("calPopup");
+    pop.hidden = false;
+    pop.classList.add("open");
+    positionCalendar(pop, $(target === "hIn" ? "hotelIn" : "hotelOut"));
+    return;
+  }
   cal.dep = getDateField("depDate");
   cal.ret = getDateField("retDate");
   const refIso = target === "dep" ? cal.dep : cal.ret;
@@ -1670,9 +1716,13 @@ function renderCalendar() {
   $("calTitle").textContent = `${ARABIC_MONTHS[m]} ${y}`;
   $("calLegend").textContent = cal.target === "ret"
     ? "اختر تاريخ العودة (بعد المغادرة)"
-    : cal.target === "dob"
-      ? "اختر تاريخ الميلاد (آخر 3 سنوات)"
-      : "اختر تاريخ المغادرة";
+    : cal.target === "hIn"
+      ? "اختر تاريخ الوصول"
+      : cal.target === "hOut"
+        ? "اختر تاريخ المغادرة (بعد الوصول)"
+        : cal.target === "dob"
+          ? "اختر تاريخ الميلاد (آخر 3 سنوات)"
+          : "اختر تاريخ المغادرة";
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const offset = new Date(y, m, 1).getDay(); // الأحد = 0 (بداية الأسبوع)
   const now = new Date();
@@ -2544,3 +2594,284 @@ function renderCards(flights) {
     }
   });
 }
+
+/* ════════════════════════════════════════════════════════════
+   تبويب الحجز الفندقي — مبدئي للتجربة
+   قاعدة فنادق حقيقية بأسعار ليلية تقديرية بالدينار العراقي
+   ════════════════════════════════════════════════════════════ */
+const hotEsc = (s) => String(s ?? "").replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const HOTEL_DB = [
+  { n: "Crystal Grand Ishtar", c: "Baghdad", cc: "Iraq", ar: "بغداد", s: 5, p: 480000, r: 8.9, a: ["إفطار", "سبا", "مسبح", "خدمة الغرف"], ad: "Al Rashid Street, Baghdad", ph: "+964 1 719 1234" },
+  { n: "Babylon Rotana", c: "Baghdad", cc: "Iraq", ar: "بغداد", s: 5, p: 520000, r: 9.1, a: ["إفطار", "واي فاي مجاني", "صالة رياضية", "مسبح"], ad: "Al Sinaa Street, Baghdad", ph: "+964 1 718 8000" },
+  { n: "Coral Palace International", c: "Baghdad", cc: "Iraq", ar: "بغداد", s: 5, p: 420000, r: 8.6, a: ["إفطار", "مسبح", "موقف سيارات"], ad: "Zayouna, Baghdad", ph: "+964 1 718 3030" },
+  { n: "Royal Tulip Al Rasheed", c: "Baghdad", cc: "Iraq", ar: "بغداد", s: 5, p: 450000, r: 8.8, a: ["إفطار", "سبا", "خدمة الغرف"], ad: "International Zone, Baghdad", ph: "+964 1 718 1166" },
+  { n: "Divan Erbil", c: "Erbil", cc: "Iraq", ar: "أربيل", s: 5, p: 350000, r: 9.0, a: ["إفطار", "مسبح", "واي فاي مجاني", "صالة رياضية"], ad: "Gulan Street, Erbil", ph: "+964 66 220 2222" },
+  { n: "Erbil Rotana", c: "Erbil", cc: "Iraq", ar: "أربيل", s: 5, p: 330000, r: 8.7, a: ["إفطار", "مسبح", "سبا"], ad: "60 Meter Road, Erbil", ph: "+964 66 222 4000" },
+  { n: "Ramada by Wyndham Erbil", c: "Erbil", cc: "Iraq", ar: "أربيل", s: 4, p: 220000, r: 8.3, a: ["إفطار", "واي فاي مجاني", "موقف سيارات"], ad: "Kirkuk Road, Erbil", ph: "+964 66 252 8900" },
+  { n: "Grand Erbil Hotel", c: "Erbil", cc: "Iraq", ar: "أربيل", s: 4, p: 190000, r: 8.1, a: ["إفطار", "مسبح"], ad: "60 Meter Road, Erbil", ph: "+964 66 223 9000" },
+  { n: "Burj Al Arab Jumeirah", c: "Dubai", cc: "UAE", ar: "دبي", s: 7, p: 3800000, r: 9.8, a: ["شاطئ خاص", "سبا", "خدمة الغرف 24/7", "طائرة هيليكوبتر"], ad: "Jumeirah Beach Road, Dubai", ph: "+971 4 301 7777" },
+  { n: "Atlantis The Palm", c: "Dubai", cc: "UAE", ar: "دبي", s: 5, p: 2100000, r: 9.5, a: ["أكواريوم", "مسبح", "شاطئ خاص", "سبا"], ad: "Palm Jumeirah, Dubai", ph: "+971 4 426 2000" },
+  { n: "Jumeirah Beach Hotel", c: "Dubai", cc: "UAE", ar: "دبي", s: 5, p: 950000, r: 9.0, a: ["شاطئ", "مسبح", "سبا", "إفطار"], ad: "Jumeirah Beach Road, Dubai", ph: "+971 4 348 0000" },
+  { n: "Taj Jumeirah Lakes Towers", c: "Dubai", cc: "UAE", ar: "دبي", s: 5, p: 420000, r: 8.8, a: ["مسبح على السطح", "صالة رياضية", "إفطار"], ad: "JLT, Dubai", ph: "+971 4 492 2300" },
+  { n: "Rove Downtown", c: "Dubai", cc: "UAE", ar: "دبي", s: 4, p: 280000, r: 8.9, a: ["مسبح", "صالة ألعاب", "إفطار"], ad: "Sheikh Mohammed bin Rashid Blvd, Dubai", ph: "+971 4 561 7100" },
+  { n: "Banana Island Resort Doha", c: "Doha", cc: "Qatar", ar: "الدوحة", s: 5, p: 1300000, r: 9.2, a: ["شاطئ خاص", "سبا", "مطاعم"], ad: "Banana Island, Doha", ph: "+974 4040 6666" },
+  { n: "Marriott Marquis City Center Doha", c: "Doha", cc: "Qatar", ar: "الدوحة", s: 5, p: 460000, r: 8.9, a: ["مسبح", "صالة رياضية", "إفطار"], ad: "West Bay, Doha", ph: "+974 4419 5000" },
+  { n: "City Centre Rotana Doha", c: "Doha", cc: "Qatar", ar: "الدوحة", s: 4, p: 380000, r: 8.5, a: ["إفطار", "تسوق متصل", "مسبح"], ad: "Conference Centre Street, Doha", ph: "+974 4470 6666" },
+  { n: "Four Seasons Hotel Riyadh", c: "Riyadh", cc: "Saudi Arabia", ar: "الرياض", s: 5, p: 780000, r: 9.0, a: ["سبا", "مسبح", "صالة رياضية", "إفطار"], ad: "King Fahd Road, Riyadh", ph: "+966 11 219 8888" },
+  { n: "The Ritz-Carlton Riyadh", c: "Riyadh", cc: "Saudi Arabia", ar: "الرياض", s: 5, p: 920000, r: 9.3, a: ["سبا", "حدائق", "مسبح", "إفطار"], ad: "Al Maather Road, Riyadh", ph: "+966 11 802 8888" },
+  { n: "Sheraton Riyadh Hotel", c: "Riyadh", cc: "Saudi Arabia", ar: "الرياض", s: 4, p: 320000, r: 8.4, a: ["مسبح", "واي فاي مجاني", "إفطار"], ad: "King Fahd Road, Riyadh", ph: "+966 11 454 3300" },
+  { n: "Jeddah Hilton", c: "Jeddah", cc: "Saudi Arabia", ar: "جدة", s: 5, p: 260000, r: 8.6, a: ["شاطئ", "مسبح", "سبا"], ad: "North Corniche, Jeddah", ph: "+966 12 636 0000" },
+  { n: "Ciragan Palace Kempinski", c: "Istanbul", cc: "Turkey", ar: "اسطنبول", s: 5, p: 1600000, r: 9.6, a: ["إطلالة البوسفور", "سبا", "مطاعم فاخرة"], ad: "Ciragan Caddesi, Besiktas, Istanbul", ph: "+90 212 326 4646" },
+  { n: "Raffles Istanbul", c: "Istanbul", cc: "Turkey", ar: "اسطنبول", s: 5, p: 680000, r: 9.1, a: ["سبا", "مسبح", "صالة رياضية"], ad: "Zorlu Center, Suleyman Seba Cad, Istanbul", ph: "+90 212 924 0200" },
+  { n: "Titanic City Taksim", c: "Istanbul", cc: "Turkey", ar: "اسطنبول", s: 4, p: 210000, r: 8.5, a: ["مسبح", "إفطار", "واي فاي مجاني"], ad: "Lampli Hamam Sokak, Taksim, Istanbul", ph: "+90 212 358 0303" },
+  { n: "Four Seasons Hotel Amman", c: "Amman", cc: "Jordan", ar: "عمّان", s: 5, p: 350000, r: 8.8, a: ["سبا", "مسبح", "إفطار"], ad: "Al-Kindi Street, Amman", ph: "+962 6 510 8500" },
+  { n: "Amman Rotana", c: "Amman", cc: "Jordan", ar: "عمّان", s: 5, p: 300000, r: 8.6, a: ["مسبح", "صالة رياضية", "إفطار"], ad: "Black Iris Street, Amman", ph: "+962 6 520 3333" },
+  { n: "Le Gray Beirut", c: "Beirut", cc: "Lebanon", ar: "بيروت", s: 5, p: 420000, r: 8.9, a: ["سبا", "إفطار", "إطلالة البحر"], ad: "Martyr's Square, Beirut", ph: "+961 1 970 555" },
+  { n: "Phoenicia Beirut", c: "Beirut", cc: "Lebanon", ar: "بيروت", s: 5, p: 380000, r: 8.7, a: ["شاطئ", "مسبح", "سبا"], ad: "Mina El Hosn, Beirut", ph: "+961 1 369 000" },
+  { n: "Marriott Cairo Zamalek", c: "Cairo", cc: "Egypt", ar: "القاهرة", s: 5, p: 180000, r: 8.5, a: ["حدائق", "مسبح", "إفطار"], ad: "15 Saray El Gezira St, Zamalek, Cairo", ph: "+20 2 2728 3000" },
+  { n: "Nile Ritz-Carlton", c: "Cairo", cc: "Egypt", ar: "القاهرة", s: 5, p: 260000, r: 8.9, a: ["إطلالة النيل", "سبا", "مسبح"], ad: "1113 Corniche El Nil, Cairo", ph: "+20 2 2577 8888" },
+  { n: "The Ritz London", c: "London", cc: "United Kingdom", ar: "لندن", s: 5, p: 1500000, r: 9.4, a: ["شاي بعد الظهيرة", "سبا", "فخامة كلاسيكية"], ad: "150 Piccadilly, London", ph: "+44 20 7493 8181" },
+  { n: "Mandarin Oriental Hyde Park", c: "London", cc: "United Kingdom", ar: "لندن", s: 5, p: 1900000, r: 9.3, a: ["سبا", "إطلالة الحديقة", "مطاعم"], ad: "66 Knightsbridge, London", ph: "+44 20 7823 8888" },
+  { n: "Premier Inn London", c: "London", cc: "United Kingdom", ar: "لندن", s: 3, p: 95000, r: 8.0, a: ["واي فاي مجاني", "إفطار", "موقع مركزي"], ad: "County Hall, South Bank, London", ph: "+44 333 234 2345" },
+  { n: "Hotel Ritz Paris", c: "Paris", cc: "France", ar: "باريس", s: 5, p: 2100000, r: 9.5, a: ["سبا", "مطعم نجمات", "فخامة تاريخية"], ad: "15 Place Vendôme, Paris", ph: "+33 1 43 16 30 30" },
+  { n: "Hotel Lotti Paris", c: "Paris", cc: "France", ar: "باريس", s: 4, p: 480000, r: 8.6, a: ["إفطار", "واي فاي مجاني"], ad: "7 Rue de Castiglione, Paris", ph: "+33 1 42 61 42 61" },
+  { n: "Hotel Sacher Wien", c: "Vienna", cc: "Austria", ar: "فيينا", s: 5, p: 620000, r: 9.2, a: ["كعكة زاخر الشهيرة", "فخامة تاريخية"], ad: "Philharmonikerstrasse 4, Vienna", ph: "+43 1 512 5570" },
+  { n: "Vienna Marriott Hotel", c: "Vienna", cc: "Austria", ar: "فيينا", s: 5, p: 340000, r: 8.7, a: ["مسبح", "صالة رياضية", "إفطار"], ad: "Ringstrasse 1, Vienna", ph: "+43 1 515 18 0" }
+];
+
+const HOTEL_CITIES = [
+  { ar: "بغداد", en: "Baghdad", code: "BGW" }, { ar: "أربيل", en: "Erbil", code: "EBL" },
+  { ar: "دبي", en: "Dubai", code: "DXB" }, { ar: "الدوحة", en: "Doha", code: "DOH" },
+  { ar: "الرياض", en: "Riyadh", code: "RUH" }, { ar: "جدة", en: "Jeddah", code: "JED" },
+  { ar: "اسطنبول", en: "Istanbul", code: "IST" }, { ar: "عمّان", en: "Amman", code: "AMM" },
+  { ar: "بيروت", en: "Beirut", code: "BEY" }, { ar: "القاهرة", en: "Cairo", code: "CAI" },
+  { ar: "لندن", en: "London", code: "LON" }, { ar: "باريس", en: "Paris", code: "CDG" },
+  { ar: "فيينا", en: "Vienna", code: "VIE" }
+];
+
+function hFmt(n) { return Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " د.ع"; }
+
+function hotelCityParse(s) {
+  const q = String(s || "").trim();
+  if (!q) return null;
+  const ql = q.toLowerCase();
+  const codeM = q.match(/\(([A-Za-z]{3})\)/);
+  const code = codeM ? codeM[1].toUpperCase() : null;
+  let best = null, bestScore = 0;
+  for (const c of HOTEL_CITIES) {
+    let sc = 0;
+    if (code && c.code === code) sc = 1000;
+    else if (ql.includes(c.en.toLowerCase()) || c.en.toLowerCase().includes(ql) || q.includes(c.ar) || c.ar.includes(q)) sc = Math.max(2, 30 - q.length);
+    if (sc > bestScore) { bestScore = sc; best = c; }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+function attachHotelCitySuggest(input, list) {
+  let active = -1, items = [];
+  const close = () => { list.hidden = true; list.innerHTML = ""; active = -1; items = []; };
+  const render = () => {
+    list.innerHTML = items.map((it, i) => `
+      <div class="suggest-item ${i === active ? "active" : ""}" data-city="${it.en}">
+        <span class="si-code">${it.code}</span>
+        <span class="si-name">${hotEsc(it.ar)} — ${hotEsc(it.en)} <small>(${HOTEL_DB.filter((h) => h.ar === it.ar).length} فنادق)</small></span>
+      </div>`).join("");
+    list.querySelectorAll(".suggest-item").forEach((el, i) =>
+      el.addEventListener("mousedown", (e) => { e.preventDefault(); pick(i); }));
+  };
+  const open = (arr) => { items = arr; active = arr.length ? 0 : -1; render(); list.hidden = false; };
+  const pick = (i) => {
+    const it = items[i]; if (!it) return;
+    input.value = it.ar;
+    close();
+  };
+  input.addEventListener("input", () => {
+    const q = input.value.trim();
+    if (!q) { close(); return; }
+    const ql = q.toLowerCase();
+    const out = HOTEL_CITIES.filter((c) =>
+      c.ar.startsWith(q) || c.en.toLowerCase().startsWith(ql) ||
+      q.includes(c.ar) || c.ar.includes(q) || ql.includes(c.en.toLowerCase())).slice(0, 7);
+    out.sort((a, b) => (a.ar.startsWith(q) || a.en.toLowerCase().startsWith(ql) ? 0 : 1) - (b.ar.startsWith(q) || b.en.toLowerCase().startsWith(ql) ? 0 : 1));
+    open(out);
+  });
+  input.addEventListener("keydown", (e) => {
+    if (list.hidden) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); active = (active + 1) % items.length; render(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); active = (active - 1 + items.length) % items.length; render(); }
+    else if (e.key === "Enter") { e.preventDefault(); if (active >= 0) pick(active); }
+    else if (e.key === "Escape") { close(); }
+  });
+  document.addEventListener("click", (e) => { if (!list.contains(e.target) && e.target !== input) close(); });
+}
+
+function autoHotelOut() {
+  const inIso = getDateField("hotelIn");
+  if (!inIso) return;
+  const d = new Date(inIso);
+  d.setDate(d.getDate() + 2);
+  setDateField("hotelOut", toYmd(d));
+  cal.ret = getDateField("hotelOut");
+}
+
+let hotSel = null; // { h, ref, in, out, nights, rooms, guests, guestName }
+
+function hotelNights() {
+  const a = getDateField("hotelIn"), b = getDateField("hotelOut");
+  if (!a || !b) return 0;
+  return Math.max(0, isoDayDiff(a, b));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  attachHotelCitySuggest($("hotelCity"), $("hotelCitySuggest"));
+
+  $("searchHotelsBtn").addEventListener("click", () => {
+    const btn = $("searchHotelsBtn");
+    if (btn.classList.contains("busy")) return;
+    const city = hotelCityParse($("hotelCity").value);
+    if (!city) { toast("⚠️ اختر وجهة صالحة من القائمة"); return; }
+    btn.classList.add("busy"); btn.disabled = true;
+    const sec = $("hotel-results");
+    sec.hidden = false;
+    setTimeout(() => sec.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    $("hotelsList").innerHTML = "";
+    const empty = $("hotelsEmpty");
+    const list = HOTEL_DB.filter((h) => h.ar === city.ar);
+    empty.hidden = list.length > 0;
+    const nights = Math.max(1, hotelNights() || 1);
+    const rooms = Math.max(1, parseInt($("hRooms").value || "1", 10));
+    $("hotelsList").innerHTML = list.map((h, i) => `
+      <div class="hotel-card">
+        <div class="hc-head">
+          <div>
+            <div class="hc-name">${hotEsc(h.n)} <span class="hc-stars">${"★".repeat(h.s)}</span></div>
+            <div class="hc-meta">📍 ${hotEsc(h.c)}, ${hotEsc(h.cc)} — ${h.ad}</div>
+          </div>
+          <span class="hc-rating">⚡ تقييم ${h.r}</span>
+        </div>
+        <div class="hc-amen">${h.a.map((x) => `<span>${hotEsc(x)}</span>`).join("")}</div>
+        <div class="hc-foot">
+          <div class="hc-price">${hFmt(h.p)} <small>لليلة الواحدة · إجمالي ${nights} ${nights === 1 ? "ليلة" : "ليالٍ"} ≈ ${hFmt(h.p * nights)}</small></div>
+          <button type="button" class="btn btn-primary" data-hotel="${HOTEL_DB.indexOf(h)}">اختيار هذا الفندق</button>
+        </div>
+      </div>`).join("");
+    btn.classList.remove("busy"); btn.disabled = false;
+  });
+
+  $("hotelsList").addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("button[data-hotel]");
+    if (!b) return;
+    const h = HOTEL_DB[+b.dataset.hotel];
+    if (!h) return;
+    const inIso = getDateField("hotelIn");
+    if (!inIso) { toast("⚠️ اختر تاريخ الوصول أولاً"); return; }
+    if (!getDateField("hotelOut")) autoHotelOut();
+    const nights = Math.max(1, hotelNights() || 1);
+    const rooms = Math.max(1, parseInt($("hRooms").value || "1", 10));
+    const guests = Math.max(1, parseInt($("hGuests").value || "1", 10));
+    hotSel = { h, ref: tktCode(6), checkIn: inIso, checkOut: getDateField("hotelOut"), nights, rooms, guests };
+    const bsum = $("hotel-booking");
+    bsum.hidden = false;
+    $("hs-ref").textContent = hotSel.ref;
+    $("hs-hotel").textContent = `${h.n} (${"★".repeat(h.s)})`;
+    $("hs-city").textContent = `${h.c}, ${h.cc}`;
+    $("hs-in").textContent = formatArabicDate(hotSel.checkIn);
+    $("hs-out").textContent = formatArabicDate(hotSel.checkOut);
+    $("hs-nights").textContent = `${hotSel.nights} ${hotSel.nights === 1 ? "ليلة" : "ليالٍ"}`;
+    $("hs-rooms").textContent = `${hotSel.rooms} غرفة / ${hotSel.guests} نزلاء`;
+    $("hs-total").textContent = hFmt(h.p * hotSel.nights * hotSel.rooms);
+    $("hotelGuestBox").hidden = false;
+    setTimeout(() => bsum.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  });
+
+  $("genHotelVoucherBtn").addEventListener("click", () => {
+    if (!hotSel) return;
+    const name = ($("hotelGuest").value || "").trim();
+    if (!name) { toast("⚠️ اكتب اسم النزيل الرئيسي"); return; }
+    hotSel.guestName = name;
+    fillHotelVoucher();
+    $("hotel-voucher").hidden = false;
+    setTimeout(() => $("hotel-voucher").scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  });
+
+  $("regenHotelBtn").addEventListener("click", () => {
+    if (!hotSel) return;
+    hotSel.ref = tktCode(6);
+    $("hs-ref").textContent = hotSel.ref;
+    $("hv-ref").textContent = hotSel.ref;
+    $("hv-ref2").textContent = hotSel.ref;
+  });
+
+  $("cancelHotelBtn").addEventListener("click", () => {
+    hotSel = null;
+    $("hotel-booking").hidden = true;
+    $("hotel-voucher").hidden = true;
+    $("hotelGuestBox").hidden = true;
+  });
+
+  /* تعبئة ورقة إثبات الحجز (LTR · أسماء وحقول إنجليزية) */
+  function fillHotelVoucher() {
+    const s = hotSel, h = s.h;
+    $("hv-hotel").textContent = h.n;
+    $("hv-ref").textContent = s.ref;
+    $("hv-guest").textContent = (s.guestName.includes(",") ? s.guestName : s.guestName.split(/\s+/).reverse().join(", ")).toUpperCase();
+    $("hv-hotel2").textContent = h.n;
+    $("hv-city").textContent = `${h.c}, ${h.cc}`;
+    $("hv-addr").textContent = h.ad;
+    const fmt = (iso) => { if (!iso) return "—"; const d = new Date(iso); return `${String(d.getDate()).padStart(2, "0")} ${TKT_MON[d.getMonth()]} ${d.getFullYear()}`; };
+    $("hv-in").textContent = fmt(s.checkIn);
+    $("hv-out").textContent = fmt(s.checkOut);
+    $("hv-nights").textContent = `${s.nights} night${s.nights === 1 ? "" : "s"}`;
+    $("hv-roomg").textContent = `${s.rooms} room${s.rooms === 1 ? "" : "s"} / ${s.guests} guest${s.guests === 1 ? "" : "s"}`;
+    $("hv-rate").textContent = hFmt(h.p);
+    $("hv-total").textContent = hFmt(h.p * s.nights * s.rooms);
+    $("hv-phone").textContent = h.ph;
+    $("hv-ref2").textContent = s.ref;
+  }
+
+  $("pdfHotelBtn").addEventListener("click", async () => {
+    if (!hotSel) return;
+    try {
+      toast("⏳ جاري تجهيز إثبات الحجز PDF…");
+      await new Promise((r) => setTimeout(r, 120));
+      const sheet = document.querySelector(".htl-sheet");
+      const canvas = await html2canvas(sheet, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const imgW = 210, imgH = (canvas.height * imgW) / canvas.width;
+      const pageH = 297, mTop = 15 * (210 / 595), mBot = 28.5 * (210 / 595);
+      const contentH = pageH - mTop - mBot;
+      let k = 0;
+      while (k * contentH < imgH - 1) {
+        if (k > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, mTop - k * contentH, imgW, imgH);
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, imgW, mTop, "F");
+        pdf.rect(0, pageH - mBot, imgW, mBot, "F");
+        k++;
+      }
+      const info = "/Title (Hotel Booking Confirmation)"
+        + "\n/Subject (Provisional illustrative hotel booking confirmation generated for demonstration purposes.)"
+        + "\n/Keywords (hotel, booking, confirmation, reservation, provisional, demonstration)"
+        + "\n/Producer (Winnovative HTML to PDF Converter 12.15)";
+      let out = pdf.output();
+      out = out.replace(/\/Producer \(jsPDF [^)]*\)/, info);
+      const arr = new Uint8Array(out.length);
+      for (let i = 0; i < out.length; i++) arr[i] = out.charCodeAt(i) & 0xff;
+      const blob = new Blob([arr], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Hotel ${hotSel.h.n.replace(/[\\/:*?"<>|]/g, "-")} ${hotSel.ref}.pdf`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast("✅ تم تنزيل إثبات الحجز PDF");
+    } catch (err) {
+      console.error(err);
+      toast("⚠️ تعذر إنشاء PDF — حاول مجدداً");
+    }
+  });
+});

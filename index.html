@@ -27,6 +27,7 @@
       <nav class="nav-links">
         <a href="#account-form" class="tab-link active" data-tab="account">🏦 كشف الحساب</a>
         <a href="#flight-form" class="tab-link" data-tab="flights">✈️ حجز طيران</a>
+        <a href="#hotel-form" class="tab-link" data-tab="hotels">🏨 الحجز الفندقي</a>
       </nav>
     </div>
   </header>
@@ -315,6 +316,150 @@
       </p>
 
     </div><!-- /#tab-flights -->
+
+    <!-- ══════════ تبويب: الحجز الفندقي (مبدئي) ══════════ -->
+    <div class="tab-panel" id="tab-hotels">
+      <div class="hero">
+        <h1>🏨 حجز فندقي مبدئي</h1>
+        <p>ابحث عن فنادق في مدن العالم واختر ما يناسبك — قائمة فنادق حقيقية مع أسعار ليلية تقديرية بالدينار العراقي. الحجز مبدئي للتجربة فقط ولا يصدر أي تأكيد فعلي.</p>
+      </div>
+
+      <!-- نموذج البحث عن فندق -->
+      <section class="card" id="hotel-form">
+        <h2 class="card-title">🧭 تفاصيل إقامتك</h2>
+
+        <div class="route-row">
+          <div class="field leg">
+            <label for="hotelCity">📍 الوجهة <span class="req">*</span></label>
+            <div class="suggest-box">
+              <input type="text" id="hotelCity" class="suggest-input" placeholder="مدينة: بغداد، دبي، اسطنبول، لندن…" autocomplete="off" spellcheck="false">
+              <div class="suggest-list" id="hotelCitySuggest" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-row">
+          <div class="date-cell">
+            <label for="hotelIn">📅 تاريخ الوصول <span class="req">*</span></label>
+            <input type="text" id="hotelIn" class="datepicker" placeholder="اضغط لاختيار التاريخ" readonly>
+          </div>
+          <div class="date-cell" id="hotelOutField">
+            <label for="hotelOut">📅 تاريخ المغادرة</label>
+            <input type="text" id="hotelOut" class="datepicker" placeholder="اضغط لاختيار التاريخ" readonly>
+          </div>
+        </div>
+
+        <div class="options-row">
+          <div class="field opt">
+            <label>🛏️ عدد الغرف</label>
+            <div class="pax-row">
+              <div class="pax-box">
+                <input type="number" id="hRooms" min="1" max="6" value="1" aria-label="عدد الغرف">
+              </div>
+            </div>
+          </div>
+          <div class="field opt">
+            <label>👥 عدد النزلاء</label>
+            <div class="pax-row">
+              <div class="pax-box">
+                <input type="number" id="hGuests" min="1" max="9" value="2" aria-label="عدد النزلاء">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button id="searchHotelsBtn" class="btn btn-primary btn-lg" type="button">🔍 ابحث عن فنادق</button>
+        </div>
+        <p class="hint">💡 الأسعار ليلية تقديرية بالدينار العراقي لأغراض التجربة — الحجز مبدئي دائماً بلا تأكيد، ولا يُصدر أي حجز فندقي حقيقي.</p>
+      </section>
+
+      <!-- نتائج البحث -->
+      <section class="card" id="hotel-results" hidden>
+        <h2 class="card-title">🏨 الفنادق المتاحة في وجهتك</h2>
+        <div id="hotelsEmpty" class="fc-empty" hidden>
+          <span class="fc-empty-icon">🏨</span>
+          <h3>لا توجد فنادق لهذه الوجهة</h3>
+          <p>جرّب إحدى الوجهات المتاحة: بغداد، أربيل، دبي، الدوحة، الرياض، اسطنبول، عمّان، بيروت، القاهرة، لندن، باريس وفينّا.</p>
+        </div>
+        <div id="hotelsList"></div>
+        <p class="auto-note">السعر لليلة الواحدة للغرفة — يُحسب الإجمالي = السعر الليلي × عدد الليالي × عدد الغرف. الأسعار تقديرية للتجربة فقط.</p>
+      </section>
+
+      <!-- ملخص الحجز المبدئي -->
+      <section class="card" id="hotel-booking" hidden>
+        <h2 class="card-title">🏨 إقامتك المختارة</h2>
+        <div class="pax-names" id="hotelGuestBox" hidden>
+          <span class="pn-title">🧑 اسم النزيل الرئيسي</span>
+          <p class="pn-hint">اكتب الاسم كما يظهر في جواز السفر — يُطبع في إثبات الحجز بالصيغة <b>العائلة، الاسم</b> مثال: <b>ALOBAIDI, YAQEEN</b></p>
+          <div class="pn-rows">
+            <div class="pn-row">
+              <input type="text" id="hotelGuest" class="pn-name" placeholder="الاسم الكامل للنزيل الرئيسي…" autocomplete="off">
+            </div>
+          </div>
+          <div class="actions-row">
+            <button id="genHotelVoucherBtn" class="btn btn-primary" type="button">🧾 إنشاء إثبات الحجز</button>
+          </div>
+        </div>
+        <div class="bsum-grid">
+          <div class="bsum-box"><span>رقم الحجز</span><b id="hs-ref"></b></div>
+          <div class="bsum-box"><span>الفندق</span><b id="hs-hotel"></b></div>
+          <div class="bsum-box"><span>المدينة</span><b id="hs-city"></b></div>
+          <div class="bsum-box"><span>الوصول</span><b id="hs-in"></b></div>
+          <div class="bsum-box"><span>المغادرة</span><b id="hs-out"></b></div>
+          <div class="bsum-box"><span>عدد الليالي</span><b id="hs-nights"></b></div>
+          <div class="bsum-box"><span>الغرف / النزلاء</span><b id="hs-rooms"></b></div>
+          <div class="bsum-box"><span>الإجمالي التقديري</span><b id="hs-total"></b></div>
+        </div>
+        <p class="auto-note">هذا حجز مبدئي غير مؤكد — لم يُصدَر أي تأكيد فندقي ولم يُخصَم أي مبلغ. للتأكيد النهائي يرجى مراجعة الفندق أو وكيل السفر المعتمد.</p>
+        <div class="actions-row">
+          <button id="cancelHotelBtn" class="btn btn-danger-ghost" type="button">🗑️ إلغاء تحديد الفندق</button>
+        </div>
+      </section>
+
+      <!-- إثبات الحجز الفندقي -->
+      <section class="card" id="hotel-voucher" hidden>
+        <h2 class="card-title">🧾 إثبات حجزك الفندقي — نموذج مستندي (A4)</h2>
+        <p class="tkt-scrollhint">📐 مقاس A4 — جرّب تكبير المتصفح لرؤية التفاصيل الدقيقة</p>
+        <div class="tkt-scroll">
+          <div class="htl-sheet" dir="ltr">
+            <div class="htl-band">
+              <span class="htl-brand">🏨 <b id="hv-hotel">—</b></span>
+              <span class="htl-tag">HOTEL BOOKING CONFIRMATION</span>
+            </div>
+            <div class="htl-body">
+              <p class="htl-booked">Booking Confirmation&nbsp;&nbsp;<span id="hv-ref">------</span></p>
+              <div class="htl-grid">
+                <div class="htl-cell"><span>Guest Name</span><b id="hv-guest">—</b></div>
+                <div class="htl-cell"><span>Hotel</span><b id="hv-hotel2">—</b></div>
+                <div class="htl-cell"><span>City / Country</span><b id="hv-city">—</b></div>
+                <div class="htl-cell"><span>Address</span><b id="hv-addr">—</b></div>
+                <div class="htl-cell"><span>Check-in</span><b id="hv-in">—</b></div>
+                <div class="htl-cell"><span>Check-out</span><b id="hv-out">—</b></div>
+                <div class="htl-cell"><span>Nights</span><b id="hv-nights">—</b></div>
+                <div class="htl-cell"><span>Rooms / Guests</span><b id="hv-roomg">—</b></div>
+                <div class="htl-cell"><span>Rate per night</span><b id="hv-rate">—</b></div>
+                <div class="htl-cell"><span>Total</span><b id="hv-total">—</b></div>
+                <div class="htl-cell"><span>Phone</span><b id="hv-phone">—</b></div>
+                <div class="htl-cell"><span>Reference</span><b id="hv-ref2">—</b></div>
+              </div>
+              <div class="htl-note">This is a provisional illustrative booking confirmation — no actual hotel reservation has been made.</div>
+            </div>
+          </div>
+        </div>
+        <p class="auto-note">قالب توضيحي لإثبات حجز فندقي <b>مبدئي</b> — ليس تأكيداً فعلياً. المتغير: الفندق، الوجهة، المواعيد، النزلاء، ورقم الحجز العشوائي.</p>
+        <div class="actions-row">
+          <button id="regenHotelBtn" class="btn btn-ghost" type="button">🎲 رقم حجز جديد</button>
+          <button id="pdfHotelBtn" class="btn btn-ghost" type="button">⬇️ تنزيل إثبات الحجز PDF</button>
+        </div>
+      </section>
+
+      <p class="disclaimer">
+        ⚠️ تنبيه: هذا الموقع أداة تجريبية لإنشاء حجوزات فندقية <strong>مبدئية وتوضيحية فقط</strong>،
+        ولا يرتبط بأي فندق أو نظام حجز فعلي، ولا يصدر تأكيداً أو حجزاً فندقياً حقيقياً، ولا يجوز استخدامه كوثيقة حجز.
+      </p>
+
+    </div><!-- /#tab-hotels -->
 
     <!-- ══════ التقويم المنبثق (اختيار التاريخ) ══════ -->
     <div class="calendar-popup" id="calPopup" hidden>
