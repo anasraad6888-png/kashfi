@@ -2642,13 +2642,13 @@ const HOTEL_DB = [
 ];
 
 const HOTEL_CITIES = [
-  { ar: "بغداد", en: "Baghdad", code: "BGW" }, { ar: "أربيل", en: "Erbil", code: "EBL" },
-  { ar: "دبي", en: "Dubai", code: "DXB" }, { ar: "الدوحة", en: "Doha", code: "DOH" },
-  { ar: "الرياض", en: "Riyadh", code: "RUH" }, { ar: "جدة", en: "Jeddah", code: "JED" },
-  { ar: "اسطنبول", en: "Istanbul", code: "IST" }, { ar: "عمّان", en: "Amman", code: "AMM" },
-  { ar: "بيروت", en: "Beirut", code: "BEY" }, { ar: "القاهرة", en: "Cairo", code: "CAI" },
-  { ar: "لندن", en: "London", code: "LON" }, { ar: "باريس", en: "Paris", code: "CDG" },
-  { ar: "فيينا", en: "Vienna", code: "VIE" }
+  { ar: "بغداد", en: "Baghdad", code: "BGW", cc: "Iraq" }, { ar: "أربيل", en: "Erbil", code: "EBL", cc: "Iraq" },
+  { ar: "دبي", en: "Dubai", code: "DXB", cc: "UAE" }, { ar: "الدوحة", en: "Doha", code: "DOH", cc: "Qatar" },
+  { ar: "الرياض", en: "Riyadh", code: "RUH", cc: "Saudi Arabia" }, { ar: "جدة", en: "Jeddah", code: "JED", cc: "Saudi Arabia" },
+  { ar: "اسطنبول", en: "Istanbul", code: "IST", cc: "Turkey" }, { ar: "عمّان", en: "Amman", code: "AMM", cc: "Jordan" },
+  { ar: "بيروت", en: "Beirut", code: "BEY", cc: "Lebanon" }, { ar: "القاهرة", en: "Cairo", code: "CAI", cc: "Egypt" },
+  { ar: "لندن", en: "London", code: "LON", cc: "United Kingdom" }, { ar: "باريس", en: "Paris", code: "CDG", cc: "France" },
+  { ar: "فيينا", en: "Vienna", code: "VIE", cc: "Austria" }
 ];
 
 function hFmt(n) { return Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " د.ع"; }
@@ -2717,6 +2717,7 @@ function autoHotelOut() {
 }
 
 let hotSel = null; // { h, ref, in, out, nights, rooms, guests, guestName }
+let hotResults = []; // قائمة الفنادق المعروضة حالياً (حيّة أو محلية)
 
 function hotelNights() {
   const a = getDateField("hotelIn"), b = getDateField("hotelOut");
@@ -2724,37 +2725,134 @@ function hotelNights() {
   return Math.max(0, isoDayDiff(a, b));
 }
 
+/* ---------- Geoapify Places — قاعدة فنادق حية (اسم/عنوان كامل/هاتف) ----------
+   للحصول على قاعدة أكبر: geocode المدينة → جلب accommodation.hotel في دائرة 5كم
+   والنتائج تُخزَّن محلياً 30 يوماً. التعريف (النجوم/السعر/التقييم/المرافق) تقديري
+   للتجربة لأن Geoapify لا يوفّر أسعاراً — الاسم والعنوان والهاتف حقيقية. */
+const GEO_KEY = "cee249e0b0cb4959967b9cb15107d5a3";
+const GEO_STORE = "kashfi_geo_hotels_v1";
+const GEO_TTL = 30 * 24 * 3600 * 1000;
+
+function geoCache() {
+  try { return JSON.parse(localStorage.getItem(GEO_STORE) || "{}"); } catch { return {}; }
+}
+function geoCacheSave(c) {
+  try { localStorage.setItem(GEO_STORE, JSON.stringify(c)); } catch { /* سعة ممتلئة */ }
+}
+
+const CITY_BASE_PRICE = {
+  Iraq: [150000, 450000], UAE: [350000, 1400000], Qatar: [280000, 900000],
+  "Saudi Arabia": [200000, 700000], Turkey: [120000, 550000], Jordan: [130000, 400000],
+  Lebanon: [150000, 450000], Egypt: [75000, 220000], "United Kingdom": [400000, 1500000],
+  France: [350000, 1200000], Austria: [380000, 850000], Germany: [300000, 900000],
+  "United States": [350000, 1500000], Italy: [300000, 1100000], Spain: [250000, 900000]
+};
+const GEO_AMEN = ["إفطار", "واي فاي مجاني", "خدمة الغرف", "تكييف"];
+
+async function geoGeocode(q) {
+  const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&format=json&limit=1&apiKey=${GEO_KEY}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error("geocode HTTP " + resp.status);
+  const j = await resp.json();
+  const f = j.results && j.results[0];
+  if (!f) throw new Error("no geocode result");
+  return { lat: f.lat, lon: f.lon, city: f.city || q, country: f.country || "" };
+}
+
+function estHotelMeta(country) {
+  const [lo, hi] = CITY_BASE_PRICE[country] || [150000, 700000];
+  const p = Math.round((lo + Math.random() * (hi - lo)) / 1000) * 1000;
+  const s = 3 + Math.floor(Math.random() * 3);          // 3-5 نجوم
+  const r = Math.round((7.6 + Math.random() * 2) * 10) / 10; // 7.6-9.6
+  return { p, s, r };
+}
+
+function geoAddr(pr) {
+  if (pr.address_line1) return pr.address_line2 ? `${pr.address_line1}, ${pr.address_line2}` : pr.address_line1;
+  return pr.formatted || "";
+}
+
+async function geoCityHotels(cityAr, query) {
+  const cache = geoCache();
+  if (cache[cityAr] && Date.now() - cache[cityAr].at < GEO_TTL) return cache[cityAr].hotels;
+  const geo = await geoGeocode(query);
+  const url = `https://api.geoapify.com/v2/places?categories=accommodation.hotel`
+    + `&filter=circle:${geo.lon},${geo.lat},5000&limit=20&apiKey=${GEO_KEY}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error("places HTTP " + resp.status);
+  const j = await resp.json();
+  const hotels = (j.features || []).map((f) => {
+    const pr = f.properties || {};
+    const m = estHotelMeta(geo.country);
+    return {
+      n: pr.name || "Hotel",
+      c: geo.city || cityAr,
+      cc: geo.country || "",
+      ar: cityAr,
+      s: m.s, p: m.p, r: m.r,
+      a: GEO_AMEN.slice(0, 2 + Math.floor(Math.random() * 3)),
+      ad: geoAddr(pr),
+      ph: (pr.contact && pr.contact.phone) || ""
+    };
+  }).filter((h) => h.n && h.n !== "Hotel" && h.ad);
+  cache[cityAr] = { at: Date.now(), hotels };
+  geoCacheSave(cache);
+  return hotels;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   attachHotelCitySuggest($("hotelCity"), $("hotelCitySuggest"));
 
-  $("searchHotelsBtn").addEventListener("click", () => {
+  $("searchHotelsBtn").addEventListener("click", async () => {
     const btn = $("searchHotelsBtn");
     if (btn.classList.contains("busy")) return;
-    const city = hotelCityParse($("hotelCity").value);
-    if (!city) { toast("⚠️ اختر وجهة صالحة من القائمة"); return; }
+    const q = ($("hotelCity").value || "").trim();
+    if (!q) { toast("⚠️ اكتب مدينة الوجهة"); return; }
+    const city = hotelCityParse(q);
+    const arName = city ? city.ar : q;
     btn.classList.add("busy"); btn.disabled = true;
     const sec = $("hotel-results");
     sec.hidden = false;
     setTimeout(() => sec.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     $("hotelsList").innerHTML = "";
-    const empty = $("hotelsEmpty");
-    const list = HOTEL_DB.filter((h) => h.ar === city.ar);
-    empty.hidden = list.length > 0;
+    $("hotelsEmpty").hidden = true;
+    const srcEl = $("hotelsSource"); if (srcEl) srcEl.hidden = true;
+    const ldr = $("hotelLoading"); if (ldr) ldr.hidden = false;
     const nights = Math.max(1, hotelNights() || 1);
     const rooms = Math.max(1, parseInt($("hRooms").value || "1", 10));
+    let list = [], source = "local";
+    try {
+      const geoQuery = city ? `${city.en}, ${city.cc || ""}` : q;
+      list = await geoCityHotels(arName, geoQuery);
+      if (!list.length) throw new Error("geo empty");
+      source = "geoapify";
+    } catch {
+      list = city ? HOTEL_DB.filter((h) => h.ar === arName) : [];
+      source = "local";
+    }
+    if (ldr) ldr.hidden = true;
+    hotResults = list;
+    if (srcEl) {
+      srcEl.textContent = source === "geoapify"
+        ? "🌐 نتائج حية من Geoapify — الاسم والعنوان الكامل ورقم الهاتف حقيقية، والنجوم والسعر التقديري للغاية التجريبية."
+        : (list.length ? "📚 قاعدة محلية مدمجة (تعذّر الاتصال بالخدمة الحية)." : "");
+      srcEl.hidden = !list.length;
+    }
+    $("hotelsEmpty").hidden = list.length > 0;
     $("hotelsList").innerHTML = list.map((h, i) => `
       <div class="hotel-card">
         <div class="hc-head">
           <div>
             <div class="hc-name">${hotEsc(h.n)} <span class="hc-stars">${"★".repeat(h.s)}</span></div>
             <div class="hc-meta">📍 ${hotEsc(h.c)}, ${hotEsc(h.cc)} — ${h.ad}</div>
+            ${h.ph ? `<div class="hc-meta">📞 ${hotEsc(h.ph)}</div>` : ""}
           </div>
           <span class="hc-rating">⚡ تقييم ${h.r}</span>
         </div>
         <div class="hc-amen">${h.a.map((x) => `<span>${hotEsc(x)}</span>`).join("")}</div>
         <div class="hc-foot">
           <div class="hc-price">${hFmt(h.p)} <small>لليلة الواحدة · إجمالي ${nights} ${nights === 1 ? "ليلة" : "ليالٍ"} ≈ ${hFmt(h.p * nights)}</small></div>
-          <button type="button" class="btn btn-primary" data-hotel="${HOTEL_DB.indexOf(h)}">اختيار هذا الفندق</button>
+          <button type="button" class="btn btn-primary" data-hotel="${i}">اختيار هذا الفندق</button>
         </div>
       </div>`).join("");
     btn.classList.remove("busy"); btn.disabled = false;
@@ -2763,7 +2861,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("hotelsList").addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("button[data-hotel]");
     if (!b) return;
-    const h = HOTEL_DB[+b.dataset.hotel];
+    const h = hotResults[+b.dataset.hotel];
     if (!h) return;
     const inIso = getDateField("hotelIn");
     if (!inIso) { toast("⚠️ اختر تاريخ الوصول أولاً"); return; }
@@ -2827,7 +2925,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("hv-roomg").textContent = `${s.rooms} room${s.rooms === 1 ? "" : "s"} / ${s.guests} guest${s.guests === 1 ? "" : "s"}`;
     $("hv-rate").textContent = hFmt(h.p);
     $("hv-total").textContent = hFmt(h.p * s.nights * s.rooms);
-    $("hv-phone").textContent = h.ph;
+    $("hv-phone").textContent = h.ph || "—";
     $("hv-ref2").textContent = s.ref;
   }
 
