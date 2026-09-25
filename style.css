@@ -1200,11 +1200,14 @@ tfoot td { padding: 12px 10px; background: var(--primary-light); font-weight: 80
 .tm .ns2 { position: absolute; top: 6.3pt; left: 0; right: 0; text-align: center; font-size: 6.2pt; font-weight: 400; color: #000; }
 .tm .ic-mid { position: absolute; left: 0.4pt; top: 15.1pt; width: 18.1pt; height: auto; }
 .tm .dur { position: absolute; top: 27.6pt; left: 0; right: 0; text-align: center; font-size: 6.2pt; font-style: normal; color: #000; white-space: nowrap; }
-.tk-conf { font-size: 6.8pt; color: #000; white-space: nowrap; margin-top: 9pt; }
+.tk-conf { font-size: 6.8pt; color: #000; white-space: nowrap; margin-top: 2pt; }
 .tk-conf .tk-conf-code { font-weight: 400; letter-spacing: .5pt; }
 
 /* الأجزاء النصية داخل الجسم */
 .tk-sec { margin-top: 5pt; }
+/* قسم PASSENGERS مباشرة تحت Confirmation Number — مسافة أكبر من التأكيد
+   (بعدما قُلّصت المسافة فوق التأكيد ليصبح ملاصقاً لصف الشركة) */
+.tk-conf + .tk-sec { margin-top: 10pt; }
 .tk-sec .h { display: block; font-size: 6.8pt; font-weight: 700; color: #000; }
 .tk-sec .pv { font-size: 6.8pt; color: #000; margin-top: 2.5pt; white-space: pre-line; line-height: 1.45; }
 /* جدول PASSENGERS عند وجود رضع — عمودان Name | Special Services (بنمط المرجع) */
