@@ -624,7 +624,22 @@ document.addEventListener("DOMContentLoaded", () => {
           if (y >= imgH - 1) break;
         }
       }
-      pdf.save(filename);
+      /* ميتاداتا مخصصة: المنشئ (Creator) والمنتج (Producer) = x-easypdf/fop
+         كما في كشف حساب مرجعي حقيقي (دون sTitle/Subject لأن jsPDF لا يكتبها أصلاً) */
+      const info = "/Creator (x-easypdf/fop)\n/Producer (x-easypdf/fop)";
+      let out = pdf.output();
+      out = out.replace(/\/Producer \(jsPDF [^)]*\)/, info);
+      /* تحويل بايتات آمن — لا نمرر out عبر encodeURIComponent/unescape لأن البايتات
+         ≥0x80 ستُتلف (تتحول لكل بايت بايتين) فيتلف الملف والصفحات تبيضّ. */
+      const arr = new Uint8Array(out.length);
+      for (let i = 0; i < out.length; i++) arr[i] = out.charCodeAt(i) & 0xff;
+      const blob = new Blob([arr], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
       toast("✅ تم تنزيل الكشف PDF");
     } catch (err) {
       console.error(err);
