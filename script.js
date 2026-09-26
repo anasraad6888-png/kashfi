@@ -2669,33 +2669,85 @@ function hotelCityParse(s) {
   return bestScore > 0 ? best : null;
 }
 
+let WORLD_CITIES = null; // فهرس كل مدن العالم: { city, country, iata, lat, lon, ar }
+/* بناء فهرس المدن من قاعدة OpenFlights (نفسها في تبويب الطيران):
+   مدينة+دولة فريدة، وإحداثيات المطار الأكثر نشاطاً، وأسماء عربية من CITY_ALIAS */
+async function worldCityIndex() {
+  if (WORLD_CITIES) return WORLD_CITIES;
+  const db = await loadFlightDB();
+  if (!db || !db.airports) return [];
+  const rc = routeCountMap();
+  const map = new Map();
+  for (const [iata, a] of Object.entries(db.airports)) {
+    const city = String(a[1] || "").trim(), country = String(a[2] || "").trim();
+    if (!city) continue;
+    const key = `${city}\u0001${country}`;
+    let e = map.get(key);
+    if (!e) { e = { city, country, iata, lat: Number(a[3]), lon: Number(a[4]), rc: 0, ar: "" }; map.set(key, e); }
+    const r = rc.get(iata) || 0;
+    if (r > e.rc) { e.rc = r; e.iata = iata; e.lat = Number(a[3]); e.lon = Number(a[4]); }
+  }
+  for (const [ar, iata] of Object.entries(CITY_ALIAS)) {
+    for (const e of map.values()) {
+      if (e.iata === iata) { e.ar = ar; break; }
+    }
+  }
+  WORLD_CITIES = [...map.values()].filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon));
+  return WORLD_CITIES;
+}
+
 function attachHotelCitySuggest(input, list) {
   let active = -1, items = [];
   const close = () => { list.hidden = true; list.innerHTML = ""; active = -1; items = []; };
   const render = () => {
-    list.innerHTML = items.map((it, i) => `
-      <div class="suggest-item ${i === active ? "active" : ""}" data-city="${it.en}">
-        <span class="si-code">${it.code}</span>
-        <span class="si-name">${hotEsc(it.ar)} — ${hotEsc(it.en)} <small>(${HOTEL_DB.filter((h) => h.ar === it.ar).length} فنادق)</small></span>
+    const html = items.map((it, i) => `
+      <div class="suggest-item ${i === active ? "active" : ""}" data-city="${it.iata}">
+        <span class="si-code">${it.iata}</span>
+        <span class="si-name">${it.ar ? `${hotEsc(it.ar)} — ` : ""}${hotEsc(it.city)} <small>· ${hotEsc(it.country)}</small></span>
       </div>`).join("");
+    list.innerHTML = html;
     list.querySelectorAll(".suggest-item").forEach((el, i) =>
       el.addEventListener("mousedown", (e) => { e.preventDefault(); pick(i); }));
+    return html;
   };
-  const open = (arr) => { items = arr; active = arr.length ? 0 : -1; render(); list.hidden = false; };
   const pick = (i) => {
     const it = items[i]; if (!it) return;
-    input.value = it.ar;
+    input.value = it.ar || it.city;
+    input.dataset.last = input.value;
+    input.dataset.arselection = it.ar || "";
+    input.dataset.geoq = `${it.city}, ${it.country}`;
+    input.dataset.geocountry = it.country;
+    input.dataset.gcoord = `${it.lon},${it.lat}`;
     close();
   };
-  input.addEventListener("input", () => {
+  input.addEventListener("input", async () => {
     const q = input.value.trim();
     if (!q) { close(); return; }
-    const ql = q.toLowerCase();
-    const out = HOTEL_CITIES.filter((c) =>
-      c.ar.startsWith(q) || c.en.toLowerCase().startsWith(ql) ||
-      q.includes(c.ar) || c.ar.includes(q) || ql.includes(c.en.toLowerCase())).slice(0, 7);
-    out.sort((a, b) => (a.ar.startsWith(q) || a.en.toLowerCase().startsWith(ql) ? 0 : 1) - (b.ar.startsWith(q) || b.en.toLowerCase().startsWith(ql) ? 0 : 1));
-    open(out);
+    // أي تعديل يدوي يلغي الوجهة المختارة سابقاً
+    if (input.dataset.last !== input.value) {
+      delete input.dataset.last; delete input.dataset.arselection;
+      delete input.dataset.geoq; delete input.dataset.geocountry; delete input.dataset.gcoord;
+    }
+    const ql = q.toLowerCase(), qUp = ql.toUpperCase();
+    const cites = await worldCityIndex();
+    const out = [];
+    for (const c of cites) {
+      let sc = 0;
+      if (c.iata === qUp) sc = 1000;
+      else if (c.ar && c.ar.startsWith(q)) sc = 920;
+      else if (c.city.toLowerCase() === ql) sc = 880;
+      else if (c.city.toLowerCase().startsWith(ql)) sc = 800 - Math.min(30, c.city.length);
+      else if (c.ar && c.ar.includes(q)) sc = 520;
+      else if (c.city.toLowerCase().includes(ql)) sc = 470 - Math.min(40, c.city.length);
+      else if (c.country.toLowerCase().includes(ql)) sc = 300;
+      else continue;
+      out.push({ c, sc });
+    }
+    out.sort((a, b) => b.sc - a.sc);
+    items = out.slice(0, 9).map((o) => o.c);
+    active = items.length ? 0 : -1;
+    if (items.length) render();
+    list.hidden = false;
   });
   input.addEventListener("keydown", (e) => {
     if (list.hidden) return;
@@ -2772,10 +2824,14 @@ function geoAddr(pr) {
   return pr.formatted || "";
 }
 
-async function geoCityHotels(cityAr, query) {
+async function geoCityHotels(cityAr, query, coords, countryHint) {
   const cache = geoCache();
   if (cache[cityAr] && Date.now() - cache[cityAr].at < GEO_TTL) return cache[cityAr].hotels;
-  const geo = await geoGeocode(query);
+  /* إذا وُجدت إحداثيات من فهرس المطارات المدمج نستخدمها مباشرة
+     (أدق وأوفر لرصيد Geoapify) وإلا نجري ترميزاً جغرافياً */
+  const geo = coords
+    ? { lat: coords.lat, lon: coords.lon, city: cityAr || query, country: countryHint || "" }
+    : await geoGeocode(query);
   const url = `https://api.geoapify.com/v2/places?categories=accommodation.hotel`
     + `&filter=circle:${geo.lon},${geo.lat},5000&limit=20&apiKey=${GEO_KEY}`;
   const resp = await fetch(url);
@@ -2802,14 +2858,37 @@ async function geoCityHotels(cityAr, query) {
 
 document.addEventListener("DOMContentLoaded", () => {
   attachHotelCitySuggest($("hotelCity"), $("hotelCitySuggest"));
+  worldCityIndex().catch(() => {}); // تحميل مسبق لفهرس المدن (اقتراح فوري)
 
   $("searchHotelsBtn").addEventListener("click", async () => {
     const btn = $("searchHotelsBtn");
     if (btn.classList.contains("busy")) return;
     const q = ($("hotelCity").value || "").trim();
     if (!q) { toast("⚠️ اكتب مدينة الوجهة"); return; }
+    const inp = $("hotelCity");
     const city = hotelCityParse(q);
-    const arName = city ? city.ar : q;
+    /* تحديد الوجهة للترميز الجغرافي (وسط المدينة)، مع إحداثيات المطار كاحتياطي */
+    let arName = inp.dataset.arselection || q;
+    let geoQuery = "", fallbackCoords = null, fallbackCountry = "";
+    if (inp.dataset.last === inp.value && inp.dataset.geoq && inp.dataset.gcoord) {
+      geoQuery = inp.dataset.geoq;
+      fallbackCountry = inp.dataset.geocountry || "";
+      const [lon, lat] = inp.dataset.gcoord.split(",").map(Number);
+      fallbackCoords = { lon, lat };
+    } else {
+      const db = await loadFlightDB();
+      const ap = (db && db.airports) ? db.airports : null;
+      const aliasA = CITY_ALIAS[q] ? (ap ? ap[CITY_ALIAS[q]] : null) : null;
+      if (aliasA) {
+        geoQuery = `${aliasA[1]}, ${aliasA[2]}`;
+        fallbackCountry = aliasA[2] || "";
+        fallbackCoords = { lon: Number(aliasA[4]), lat: Number(aliasA[3]) };
+      } else if (city) {
+        geoQuery = `${city.en}, ${city.cc || ""}`;
+      } else {
+        geoQuery = q;
+      }
+    }
     btn.classList.add("busy"); btn.disabled = true;
     const sec = $("hotel-results");
     sec.hidden = false;
@@ -2822,13 +2901,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const rooms = Math.max(1, parseInt($("hRooms").value || "1", 10));
     let list = [], source = "local";
     try {
-      const geoQuery = city ? `${city.en}, ${city.cc || ""}` : q;
-      list = await geoCityHotels(arName, geoQuery);
+      list = await geoCityHotels(arName, geoQuery, null, ""); // ترميز جغرافي → وسط المدينة
       if (!list.length) throw new Error("geo empty");
       source = "geoapify";
     } catch {
-      list = city ? HOTEL_DB.filter((h) => h.ar === arName) : [];
-      source = "local";
+      try {
+        if (fallbackCoords) {
+          list = await geoCityHotels(arName, geoQuery, fallbackCoords, fallbackCountry);
+          if (list.length) source = "geoapify";
+        }
+      } catch { list = []; }
+      if (!list.length) list = city ? HOTEL_DB.filter((h) => h.ar === arName) : [];
     }
     if (ldr) ldr.hidden = true;
     hotResults = list;
